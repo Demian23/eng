@@ -1,7 +1,7 @@
 #pragma once
 
+#include <optional>
 #include <vector>
-#include <string_view>
 
 namespace obj{
 
@@ -20,25 +20,21 @@ using Vertex = FourComponentVector;
 using Normal = ThreeComponentVector;
 using TextureVertexCoordinates = ThreeComponentVector;
 
-enum{MinimalFaceComponents = 3};
+enum{MinimalPolygonComponents= 3};
 
-struct FaceComponentEx final{
-    Vertex* vertex; // TODO or smth as optional?
-    TextureVertexCoordinates* textureCoord;
-    Normal* normals;
+struct PolygonIndexes{
+    numeric vertexIndex;
+    numeric normalIndex;
 };
 
-struct FaceComponent final{
-    Vertex* vertex; // TODO or smth as optional?
-    Normal* normals;
+struct PolygonComponent final{
+    Vertex vertex; 
+    std::optional<Normal> normal;
 };
 
-struct FaceEx final{
-    std::vector<FaceComponentEx> components{MinimalFaceComponents};
-};
-
-struct Face final{
-    std::vector<FaceComponent> components{MinimalFaceComponents};
+struct Polygon final{
+    Polygon(unsigned long size) : f{size}{}
+    std::vector<PolygonComponent> f;
 };
 
 

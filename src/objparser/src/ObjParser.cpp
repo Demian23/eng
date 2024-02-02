@@ -28,4 +28,21 @@ Vertex strToVertex(std::string_view stringRep)
 
 Normal strToNormal(std::string_view stringRep){char* p; return parseVector(stringRep, &p);}
 
+std::vector<PolygonIndexes> strToPolygonIndexesVector(std::string_view stringRep)
+{
+    std::vector<PolygonIndexes> indexesVector;
+    char* lastPos = const_cast<char*>(stringRep.data());
+    long vertexIndex{}, normalIndex{};
+    while((vertexIndex = std::strtol(lastPos, &lastPos, 10)) != 0){
+        if(vertexIndex == 0) break;
+        if(*lastPos == '/'){
+            lastPos++;
+            while(*(lastPos++) != '/');
+            normalIndex = std::strtol(lastPos, &lastPos, 10);
+        }
+        indexesVector.emplace_back(vertexIndex, normalIndex);
+    }
+    return indexesVector;
+}
+
 };
