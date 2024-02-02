@@ -1,0 +1,15 @@
+obj/
+bin/
+*.o
+.DS_Store
+*.dSYM
+*.log
+*.mk
+*.dep
+build/
+Testing/
+.vscode/
+.cache/
+CMakeFiles/
+Testing/
+CMakeCache.txt
