@@ -11,5 +11,7 @@ Testing/
 .vscode/
 .cache/
 CMakeFiles/
-Testing/
 CMakeCache.txt
+.idea/
+release/
+debug/

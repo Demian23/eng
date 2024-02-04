@@ -1,43 +1,51 @@
-#include <cstdlib>
 #include "ObjParser.h"
 #include "Elements.h"
+#include <cstdlib>
 
-namespace obj{
+namespace eng::obj {
 
-ThreeComponentVector parseVector(std::string_view stringRep, char** lastPos)
+ThreeDimensionalVector parseVector(std::string_view stringRep, char **lastPos)
 {
-    ThreeComponentVector vec;
-    char *nextPos {};
-    vec.x = std::strtof(stringRep.data(), lastPos);
-    vec.y = std::strtof(*lastPos, &nextPos);
-    vec.z = std::strtof(nextPos, lastPos);
-    return vec;
+    ThreeDimensionalVector result{};
+    char *nextPos{};
+    result[0] = std::strtof(stringRep.data(), lastPos);
+    result[1] = std::strtof(*lastPos, &nextPos);
+    result[2] = std::strtof(nextPos, lastPos);
+    return result;
 }
 
 Vertex strToVertex(std::string_view stringRep)
 {
-    //auto [ptr, err] = std::from_chars(stringRep.data(), stringRep.data() + stringRep.size(), newVertex.x, 10);
-    // TODO think about errors
-    char* lastPos {};
+    // auto [ptr, err] = std::from_chars(stringRep.data(), stringRep.data() +
+    // stringRep.size(), newVertex.x, 10);
+    //  TODO think about errors
+    char *lastPos{};
     auto v = parseVector(stringRep, &lastPos);
-    Vertex newVertex{.x = v.x, .y = v.y, .z = v.z, .w = 0};
-    if(lastPos != stringRep.end())
-        newVertex.w = std::strtof(lastPos, nullptr);
+    Vertex newVertex{v[0], v[1], v[2], 1.0f};
+    if (lastPos != stringRep.end())
+        newVertex[3] = std::strtof(lastPos, nullptr);
     return newVertex;
 }
 
-Normal strToNormal(std::string_view stringRep){char* p; return parseVector(stringRep, &p);}
+Normal strToNormal(std::string_view stringRep)
+{
+    char *p;
+    return parseVector(stringRep, &p);
+}
 
-std::vector<PolygonIndexes> strToPolygonIndexesVector(std::string_view stringRep)
+std::vector<PolygonIndexes>
+strToPolygonIndexesVector(std::string_view stringRep)
 {
     std::vector<PolygonIndexes> indexesVector;
-    char* lastPos = const_cast<char*>(stringRep.data());
+    char *lastPos = const_cast<char *>(stringRep.data());
     long vertexIndex{}, normalIndex{};
-    while((vertexIndex = std::strtol(lastPos, &lastPos, 10)) != 0){
-        if(vertexIndex == 0) break;
-        if(*lastPos == '/'){
+    while ((vertexIndex = std::strtol(lastPos, &lastPos, 10)) != 0) {
+        if (vertexIndex == 0)
+            break;
+        if (*lastPos == '/') {
             lastPos++;
-            while(*(lastPos++) != '/');
+            while (*(lastPos++) != '/')
+                ;
             normalIndex = std::strtol(lastPos, &lastPos, 10);
         }
         indexesVector.emplace_back(vertexIndex, normalIndex);
@@ -45,4 +53,4 @@ std::vector<PolygonIndexes> strToPolygonIndexesVector(std::string_view stringRep
     return indexesVector;
 }
 
-};
+} // namespace eng::obj

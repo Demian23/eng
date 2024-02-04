@@ -1,41 +1,29 @@
 #pragma once
 
+#include "../../eng.h"
 #include <optional>
 #include <vector>
 
-namespace obj{
+namespace eng::obj {
 
-using numeric = long;
-using floating = float;
+using Vertex = FourDimensionalVector;
+using Normal = ThreeDimensionalVector;
 
-struct ThreeComponentVector final{
-    floating x, y, z;
-};
+enum { MinimalPolygonComponents = 3 };
 
-struct FourComponentVector final{
-    floating x, y, z, w;
-};
-
-using Vertex = FourComponentVector;
-using Normal = ThreeComponentVector;
-using TextureVertexCoordinates = ThreeComponentVector;
-
-enum{MinimalPolygonComponents= 3};
-
-struct PolygonIndexes{
+struct PolygonIndexes {
     numeric vertexIndex;
     numeric normalIndex;
 };
 
-struct PolygonComponent final{
-    Vertex vertex; 
+struct PolygonComponent final {
+    Vertex vertex;
     std::optional<Normal> normal;
 };
 
-struct Polygon final{
-    Polygon(unsigned long size) : f{size}{}
+struct Polygon final {
+    Polygon(unsigned long size) : f{size} {}
     std::vector<PolygonComponent> f;
 };
 
-
-};
+} // namespace eng::obj
