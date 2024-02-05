@@ -25,6 +25,9 @@ public:
     // TODO implement matrix multiplication
     [[nodiscard]] Matrix operator*(const Matrix &matrix) const noexcept;
 
+    inline bool operator==(const Matrix& matrix)const noexcept{return matrix_ == matrix.matrix_;}
+    inline bool operator!=(const Matrix& matrix)const noexcept{return matrix_ != matrix.matrix_;}
+
 protected:
     MatrixRepresentation matrix_;
 };
