@@ -3,9 +3,9 @@
 #include "Matrix.h"
 namespace eng::mtr {
 
-class ScaleMatrix : public Matrix {
+class Scale final : public Matrix {
 public:
-    ScaleMatrix(ThreeDimensionalVector scaleVector)
+    Scale(ThreeDimensionalVector scaleVector)
     {
         for (unsigned i = 0; i < MatrixDimension - 1; i++) {
             matrix_[i][i] = scaleVector[i];

@@ -9,6 +9,7 @@ enum { MatrixDimension = 4 };
 using MatrixRepresentation =
     std::array<std::array<floating, MatrixDimension>, MatrixDimension>;
 
+// matrix row is first index
 class Matrix {
 public:
     Matrix() : matrix_{}
@@ -21,8 +22,8 @@ public:
     [[nodiscard]] FourDimensionalVector
     operator*(FourDimensionalVector vector) const noexcept;
 
-    [[nodiscard]] Matrix
-    operator*(const Matrix& matrix)const noexcept;
+    // TODO implement matrix multiplication
+    [[nodiscard]] Matrix operator*(const Matrix &matrix) const noexcept;
 
 protected:
     MatrixRepresentation matrix_;

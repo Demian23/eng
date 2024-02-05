@@ -1,7 +1,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "../src/Matrix.h"
-#include "../src/MoveMatrix.h"
-#include "../src/ScaleMatrix.h"
+#include "../src/Move.h"
+#include "../src/Rotate.h"
+#include "../src/Scale.h"
 #include <doctest.h>
 
 using namespace eng;
@@ -21,20 +21,44 @@ TEST_CASE("Vector multiplication with identity matrix")
     REQUIRE_EQ(vector, result);
 }
 
-TEST_CASE("Vector multiplication with ScaleMatrix")
+TEST_CASE("Vector multiplication with Scale")
 {
     FourDimensionalVector vector{3, 2, 1, 1}, expected{1.5, 4, 1, 1};
-    ScaleMatrix scaleMatrix{{0.5, 2, 1}};
+    Scale scaleMatrix{{0.5, 2, 1}};
     auto result = scaleMatrix * vector;
 
     REQUIRE_EQ(expected, result);
 }
 
-TEST_CASE("Vector multiplication with MoveMatrix")
+TEST_CASE("Vector multiplication with Move")
 {
     FourDimensionalVector vector{3, 2, 1, 1}, expected{8, 7, -1, 1};
-    MoveMatrix moveMatrix{{5, 5, -2}};
+    Move moveMatrix{{5, 5, -2}};
     auto result = moveMatrix * vector;
 
     REQUIRE_EQ(expected, result);
+}
+
+TEST_CASE("Vector rotate X 90")
+{
+    FourDimensionalVector vector{3, 2, 1, 1}, expected{3, -1, 2, 1};
+    RotateX rotate{90};
+    auto result = rotate * vector;
+    CHECK_EQ(expected, result);
+}
+
+TEST_CASE("Vector rotate Y 90")
+{
+    FourDimensionalVector vector{3, 2, 1, 1}, expected{1, 2, -3, 1};
+    RotateY rotate{90};
+    auto result = rotate * vector;
+    CHECK_EQ(expected, result);
+}
+
+TEST_CASE("Vector rotate Z 90")
+{
+    FourDimensionalVector vector{3, 2, 1, 1}, expected{-2, 3, 1, 1};
+    RotateZ rotate{90};
+    auto result = rotate * vector;
+    CHECK_EQ(expected, result);
 }
