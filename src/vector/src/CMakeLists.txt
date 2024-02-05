@@ -1,0 +1,1 @@
+add_library(vec STATIC DimensionalVector.h DimensionalVector.cpp)

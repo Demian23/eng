@@ -4,9 +4,9 @@
 
 namespace eng::obj {
 
-ThreeDimensionalVector parseVector(std::string_view stringRep, char **lastPos)
+vec::ThreeDimensionalVector parseVector(std::string_view stringRep, char **lastPos)
 {
-    ThreeDimensionalVector result{};
+    vec::ThreeDimensionalVector result{};
     char *nextPos{};
     result[0] = std::strtof(stringRep.data(), lastPos);
     result[1] = std::strtof(*lastPos, &nextPos);

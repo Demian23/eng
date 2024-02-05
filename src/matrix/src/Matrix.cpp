@@ -2,6 +2,7 @@
 
 namespace eng::mtr {
 
+
 FourDimensionalVector
 Matrix::operator*(FourDimensionalVector vector) const noexcept
 {

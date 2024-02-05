@@ -1,15 +1,18 @@
 #pragma once
 #include "../../eng.h"
+#include "../../vector/src/DimensionalVector.h"
 #include <array>
 
 namespace eng::mtr {
+
+using eng::vec::ThreeDimensionalVector;
+using eng::vec::FourDimensionalVector;
 
 enum { MatrixDimension = 4 };
 
 using MatrixRepresentation =
     std::array<std::array<floating, MatrixDimension>, MatrixDimension>;
 
-// matrix row is first index
 class Matrix {
 public:
     Matrix() : matrix_{}

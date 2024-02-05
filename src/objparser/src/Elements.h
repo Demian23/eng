@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../../eng.h"
+#include "../../vector/src/DimensionalVector.h"
 #include <optional>
 #include <vector>
 
 namespace eng::obj {
 
-using Vertex = FourDimensionalVector;
-using Normal = ThreeDimensionalVector;
+using Vertex = vec::FourDimensionalVector;
+using Normal = vec::ThreeDimensionalVector;
 
 enum { MinimalPolygonComponents = 3 };
 

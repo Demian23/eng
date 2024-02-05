@@ -1,6 +1,8 @@
 enable_testing()
+add_subdirectory(vector)
+add_subdirectory(draw)
 add_subdirectory(objparser)
-add_subdirectory(matrix_transformations)
+add_subdirectory(matrix)
 
 add_library(base INTERFACE)
 #target_include_directories(base INTERFACE ${CMAKE_SOURCE_DIR}/src/config)
