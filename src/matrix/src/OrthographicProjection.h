@@ -6,10 +6,10 @@ namespace eng::mtr{
 
 class OrthographicProjection : public Matrix{
 public:
-    OrthographicProjection(numeric xMin, numeric xMax, numeric yMin, numeric yMax, numeric zMin, numeric zMax){
-        floating width = xMax - xMin;
-        floating height = yMax - yMin;
-        matrix_[0][0] = 2.0f/(xMax - xMin);
+    OrthographicProjection(floating xMin, floating xMax, floating yMin, floating yMax, floating zMin, floating zMax){
+        auto width = xMax - xMin;
+        auto height = yMax - yMin;
+        matrix_[0][0] = 2.0f/width;
         matrix_[1][1] = 2.0f/height;
         matrix_[2][2] = 1.0f/(zMin - zMax);
         matrix_[2][3] = zMin/(zMin - zMax);

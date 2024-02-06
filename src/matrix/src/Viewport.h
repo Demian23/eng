@@ -5,7 +5,7 @@ namespace eng::mtr{
 
 class Viewport : public Matrix{
 public:
-    Viewport(numeric xMin, numeric xMax, numeric yMin, numeric yMax){
+    Viewport(floating xMin, floating xMax, floating yMin, floating yMax){
         auto width = (xMax - xMin);
         auto height = (yMax - yMin);
         matrix_[0][0] = width/2;

@@ -80,7 +80,7 @@ void parse(std::istream &stream, VertexContainer &vcont, NormalContainer &ncont,
     };
 
     for (std::string line{}; stream.good() && std::getline(stream, line);) {
-
+        if(line.ends_with('\r')) line.pop_back();
         auto delimeterPosition = line.find(objectTypeDelimiter);
         std::string_view element{line.data(), delimeterPosition};
         std::string_view strRep{line.data() + delimeterPosition + 1,

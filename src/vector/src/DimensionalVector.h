@@ -35,6 +35,14 @@ public:
         return a;
     }
 
+    DimensionalVector<dimensions>&
+    operator/=(floating value){
+        auto& a = *this;
+        for(unsigned i = 0; i < dimensions; i++)
+            a[i] /= value;
+        return a;
+    }
+
 
 };
 
