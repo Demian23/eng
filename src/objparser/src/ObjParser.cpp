@@ -4,7 +4,8 @@
 
 namespace eng::obj {
 
-vec::ThreeDimensionalVector parseVector(std::string_view stringRep, char **lastPos)
+vec::ThreeDimensionalVector parseVector(std::string_view stringRep,
+                                        char **lastPos)
 {
     vec::ThreeDimensionalVector result{};
     char *nextPos{};

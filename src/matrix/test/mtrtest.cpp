@@ -1,10 +1,10 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "../src/Move.h"
+#include "../src/OrthographicProjection.h"
 #include "../src/Rotate.h"
 #include "../src/Scale.h"
 #include "../src/View.h"
 #include "../src/Viewport.h"
-#include "../src/OrthographicProjection.h"
 #include <doctest.h>
 
 using namespace eng;
@@ -26,25 +26,13 @@ TEST_CASE("Vector multiplication with identity matrix")
 
 TEST_CASE("Matrix multiplication with matrix")
 {
-    Matrix a{{{
-        {1, 2, 3, 4},
-        {5, 6, 7, 8},
-        {5, 2, 6, 7},
-        {8, 1, 5, 7}
-    }}};
-    Matrix b{{{
-        {2, 4, 4, 3},
-        {1, 1, 2, 3},
-        {4, 4, 8, 9},
-        {9, 4, 6, 3}
-    }}};
+    Matrix a{{{{1, 2, 3, 4}, {5, 6, 7, 8}, {5, 2, 6, 7}, {8, 1, 5, 7}}}};
+    Matrix b{{{{2, 4, 4, 3}, {1, 1, 2, 3}, {4, 4, 8, 9}, {9, 4, 6, 3}}}};
 
-    Matrix expected{{{
-        {52, 34, 56, 48},
-        {116, 86, 136, 120},
-        {99, 74, 114, 96},
-        {100, 81, 116, 93}
-    }}};
+    Matrix expected{{{{52, 34, 56, 48},
+                      {116, 86, 136, 120},
+                      {99, 74, 114, 96},
+                      {100, 81, 116, 93}}}};
 
     auto result = a * b;
 
@@ -96,10 +84,12 @@ TEST_CASE("Vector rotate Z 90")
 TEST_CASE("All transformations for presenting vector on screen")
 {
     FourDimensionalVector vector{1, 2, 3, 1};
-    auto xMin = 0, xMax = 256, yMin = 0, yMax = 256, zMin = 1, zMax= 10;
-    ThreeDimensionalVector eye{0, 0, 0}, target{10, 10, 10}, up{0, 1, 0}, scale{5, 5, 5};
-    auto resultTransformations = Viewport{xMin, xMax, yMin, yMax} *
-                  OrthographicProjection{xMin, xMax, yMin, yMax, zMin, zMax} *
-                  View{eye, target, up} * Scale{scale};
+    floating xMin = 0, xMax = 256, yMin = 0, yMax = 256, zMin = 1, zMax = 10;
+    ThreeDimensionalVector eye{0, 0, 0}, target{10, 10, 10}, up{0, 1, 0},
+        scale{5, 5, 5};
+    auto resultTransformations =
+        Viewport{xMin, xMax, yMin, yMax} *
+        OrthographicProjection{xMin, xMax, yMin, yMax, zMin, zMax} *
+        View{eye, target, up} * Scale{scale};
     auto result = resultTransformations * vector;
 }

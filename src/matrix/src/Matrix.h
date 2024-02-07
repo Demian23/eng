@@ -5,8 +5,8 @@
 
 namespace eng::mtr {
 
-using eng::vec::ThreeDimensionalVector;
 using eng::vec::FourDimensionalVector;
+using eng::vec::ThreeDimensionalVector;
 
 enum { MatrixDimension = 4 };
 
@@ -28,8 +28,14 @@ public:
     // TODO implement matrix multiplication
     [[nodiscard]] Matrix operator*(const Matrix &matrix) const noexcept;
 
-    inline bool operator==(const Matrix& matrix)const noexcept{return matrix_ == matrix.matrix_;}
-    inline bool operator!=(const Matrix& matrix)const noexcept{return matrix_ != matrix.matrix_;}
+    inline bool operator==(const Matrix &matrix) const noexcept
+    {
+        return matrix_ == matrix.matrix_;
+    }
+    inline bool operator!=(const Matrix &matrix) const noexcept
+    {
+        return matrix_ != matrix.matrix_;
+    }
 
 protected:
     MatrixRepresentation matrix_;

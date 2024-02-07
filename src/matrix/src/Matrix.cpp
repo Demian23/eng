@@ -2,7 +2,6 @@
 
 namespace eng::mtr {
 
-
 FourDimensionalVector
 Matrix::operator*(FourDimensionalVector vector) const noexcept
 {
@@ -23,8 +22,8 @@ Matrix::operator*(FourDimensionalVector vector) const noexcept
 Matrix Matrix::operator*(const Matrix &matrix) const noexcept
 {
     MatrixRepresentation result;
-    for(unsigned i = 0; i < MatrixDimension; i++){
-        for(unsigned k =0; k < MatrixDimension; k++) {
+    for (unsigned i = 0; i < MatrixDimension; i++) {
+        for (unsigned k = 0; k < MatrixDimension; k++) {
             floating sum{};
             for (unsigned j = 0; j < MatrixDimension; j++) {
                 sum += matrix_[i][j] * matrix.matrix_[j][k];
