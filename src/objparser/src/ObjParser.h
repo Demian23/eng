@@ -4,6 +4,7 @@
 #include <istream>
 #include <iterator>
 #include <string_view>
+#include "PolygonVertexOnly.h"
 
 namespace eng::obj {
 
@@ -17,12 +18,15 @@ Normal strToNormal(std::string_view stringRep);
 std::vector<PolygonIndexes>
 strToPolygonIndexesVector(std::string_view stringRep);
 
+std::vector<numeric>
+strToVerticesIndexes(std::string_view stringRep);
+
 template <typename VertexContainer, typename NormalContainer>
 Polygon makePolygon(const std::vector<PolygonIndexes> &indexes,
                     VertexContainer &vcont, NormalContainer &ncont)
 {
     Polygon newPolygon{indexes.size()};
-    auto polygonIterator = newPolygon.f.begin();
+    auto polygonIterator = newPolygon.begin();
     for (auto &&index : indexes) {
         PolygonComponent newComponent{};
         if (index.vertexIndex != 0) {
@@ -59,6 +63,8 @@ inline Object strToType(std::string_view str)
     return Object::Nothing;
 }
 
+
+
 template <typename VertexContainer, typename NormalContainer,
           typename FaceContainer>
 void parse(std::istream &stream, VertexContainer &vcont, NormalContainer &ncont,
@@ -93,6 +99,44 @@ void parse(std::istream &stream, VertexContainer &vcont, NormalContainer &ncont,
             break;
         case Object::Normal:
             normalParser(strRep);
+            break;
+        case Object::Polygon:
+            polygonParser(strRep);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+template <typename VertexContainer, typename PolygonContainer>
+requires std::same_as<typename VertexContainer::value_type, Vertex>
+             && std::same_as<typename PolygonContainer::value_type, PolygonVertexOnly>
+void parseOnlyVerticesAndPolygons(std::istream &stream,
+                                  VertexContainer &vertices,
+                                  PolygonContainer &polygons)
+{
+    auto vertexInserter = std::back_inserter(vertices);
+    auto polygonInserter = std::back_inserter(polygons);
+
+    auto vertexParser = [&](std::string_view stringRep) {
+        vertexInserter = strToVertex(stringRep);
+    };
+    auto polygonParser = [&](std::string_view stringRep){
+        polygonInserter = PolygonVertexOnly::makePolygon(stringRep, vertices);
+    };
+
+    for (std::string line{}; stream.good() && std::getline(stream, line);) {
+        if (line.ends_with('\r'))
+            line.pop_back();
+        auto delimiterPosition = line.find(objectTypeDelimiter);
+        std::string_view element{line.data(), delimiterPosition};
+        std::string_view strRep{line.data() + delimiterPosition + 1,
+                                line.size() - delimiterPosition - 1};
+
+        switch (strToType(element)) {
+        case Object::Vertex:
+            vertexParser(strRep);
             break;
         case Object::Polygon:
             polygonParser(strRep);

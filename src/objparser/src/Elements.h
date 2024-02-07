@@ -18,12 +18,12 @@ struct PolygonIndexes {
 
 struct PolygonComponent final {
     Vertex vertex;
-    std::optional<Normal> normal;
+    Normal normal;
 };
 
-struct Polygon final {
-    Polygon(unsigned long size) : f{size} {}
-    std::vector<PolygonComponent> f;
+struct Polygon final : std::vector<PolygonComponent> {
+    Polygon(size_t size) : std::vector<PolygonComponent>(size) {}
 };
+
 
 } // namespace eng::obj

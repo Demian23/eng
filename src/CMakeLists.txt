@@ -3,7 +3,7 @@ add_subdirectory(vector)
 add_subdirectory(algorithm)
 add_subdirectory(objparser)
 add_subdirectory(matrix)
-add_subdirectory(draw)
+add_subdirectory(executive)
 
 add_library(base INTERFACE)
 #target_include_directories(base INTERFACE ${CMAKE_SOURCE_DIR}/src/config)

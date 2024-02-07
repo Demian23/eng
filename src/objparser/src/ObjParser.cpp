@@ -54,4 +54,22 @@ strToPolygonIndexesVector(std::string_view stringRep)
     return indexesVector;
 }
 
+std::vector<numeric>
+strToVerticesIndexes(std::string_view stringRep){
+    std::vector<numeric> indexesVector;
+    char *lastPos = const_cast<char *>(stringRep.data());
+    long vertexIndex{};
+    while ((vertexIndex = std::strtol(lastPos, &lastPos, 10)) != 0) {
+        if (vertexIndex == 0)
+            break;
+        if (*lastPos == '/') {
+            while (*(lastPos++) != ' ')
+                ;
+        }
+        indexesVector.emplace_back(vertexIndex);
+    }
+    return indexesVector;
+
+}
+
 } // namespace eng::obj
