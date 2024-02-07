@@ -20,10 +20,12 @@ std::vector<eng::obj::PolygonVertexOnly> getPolygons(std::string_view pathToObjF
 int main(int argc, char *argv[])
 {
     if(argc == 2){
-        MonoColorDrawer drawer(1000, 1000);
+        int x, y, w, h;
+        Fl::screen_xywh(x, y, w, h);
+        MonoColorDrawer drawer(w, h - 20);
         drawer.end();
-        drawer.setBackgroundColor({100, 0, 0});
-        drawer.setColor({0, 100, 0});
+        drawer.setBackgroundColor({0xFF, 0xFF, 0xFF});
+        drawer.setColor({0, 0, 100});
         drawer.setNewPolygons(getPolygons(argv[1]));
         drawer.show();
         return Fl::run();

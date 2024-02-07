@@ -15,6 +15,7 @@ using MatrixRepresentation =
 
 class Matrix {
 public:
+
     Matrix() : matrix_{}
     {
         matrix_[MatrixDimension - 1][MatrixDimension - 1] = 1.0f;
@@ -35,6 +36,13 @@ public:
     inline bool operator!=(const Matrix &matrix) const noexcept
     {
         return matrix_ != matrix.matrix_;
+    }
+
+    static Matrix createIdentityMatrix(){
+        return {{{{1.0f, 0.0f, 0.0f, 0.0f},
+                  {0.0f, 1.0f, 0.0f, 0.0f},
+                  {0.0f, 0.0f, 1.0f, 0.0f},
+                  {0.0f, 0.0f, 0.0f, 1.0f}}}};
     }
 
 protected:

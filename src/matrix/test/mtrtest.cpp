@@ -15,12 +15,7 @@ TEST_CASE("Matrix instantiation") { REQUIRE_NOTHROW(Matrix matrixInstance); }
 TEST_CASE("Vector multiplication with identity matrix")
 {
     FourDimensionalVector vector{3.0, 1.2, 4.5, 1};
-    Matrix identityMatrix{{{{1.0f, 0.0f, 0.0f, 0.0f},
-                            {0.0f, 1.0f, 0.0f, 0.0f},
-                            {0.0f, 0.0f, 1.0f, 0.0f},
-                            {0.0f, 0.0f, 0.0f, 1.0f}}}};
-
-    auto result = identityMatrix * vector;
+    auto result = Matrix::createIdentityMatrix() * vector;
     REQUIRE_EQ(vector, result);
 }
 

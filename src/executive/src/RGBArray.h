@@ -20,7 +20,9 @@ public:
         if(index < rgbArrayRep.size())
             return rgbArrayRep[index];
         else
+#ifdef ENG_DEBUGONLY
             std::cerr << "Out of bounds, index: " << index << '\n';
+#endif
         return rgbArrayRep[0];
     }
 private:

@@ -11,7 +11,6 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
-#include <FL/fl_draw.H>
 
 
 class MonoColorDrawer final : public Fl_Window{
@@ -20,10 +19,16 @@ public:
     inline void setBackgroundColor(RGB newColor){backgroundColor = newColor;}
     inline void setColor(RGB newColor){color = newColor;}
     void setNewPolygons(std::vector<eng::obj::PolygonVertexOnly>&& newPolygons);
+    eng::mtr::Matrix createNewTransformationMatrix(eng::mtr::Matrix additionalMatrix);
+    std::vector<eng::obj::PolygonVertexOnly> applyCurrentTransformation();
     void draw() override;
+    int handle(int event) override;
+
 private:
-    RGBArray screenArray;
     eng::mtr::Matrix currentTransformation;
+    RGBArray screenArray;
     RGB backgroundColor, color;
     std::vector<eng::obj::PolygonVertexOnly> polygons;
+
+    void changeModel(eng::mtr::Matrix matrix);
 };
