@@ -31,7 +31,7 @@ Matrix Matrix::operator*(const Matrix &matrix) const noexcept
             result[i][k] = sum;
         }
     }
-    return result;
+    return Matrix{result};
 }
 
 } // namespace eng::mtr

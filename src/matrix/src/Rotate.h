@@ -13,7 +13,7 @@ auto degree_to_rad(arithmetic auto degree) { return degree * M_PI / 180; }
 
 class RotateX final : public Matrix {
 public:
-    template <typename T> RotateX(T degree)
+    template <typename T> explicit RotateX(T degree)
     {
         matrix_[0][0] = 1.0f;
         matrix_[1][1] = matrix_[2][2] = std::cos(degree_to_rad(degree));
@@ -24,7 +24,7 @@ public:
 
 class RotateY final : public Matrix {
 public:
-    template <typename T> RotateY(T degree)
+    template <typename T> explicit RotateY(T degree)
     {
         matrix_[1][1] = 1.0f;
         matrix_[0][0] = matrix_[2][2] = std::cos(degree_to_rad(degree));
@@ -35,7 +35,7 @@ public:
 
 class RotateZ final : public Matrix {
 public:
-    template <typename T> RotateZ(T degree)
+    template <typename T> explicit RotateZ(T degree)
     {
         matrix_[2][2] = 1.0f;
         matrix_[0][0] = matrix_[1][1] = std::cos(degree_to_rad(degree));

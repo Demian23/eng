@@ -4,7 +4,7 @@ namespace eng::mtr {
 
 class Move final : public Matrix {
 public:
-    Move(ThreeDimensionalVector moveVector)
+    explicit Move(ThreeDimensionalVector moveVector)
     {
         for (unsigned i = 0; i < MatrixDimension - 1; i++) {
             matrix_[i][i] = 1.0f;

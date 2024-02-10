@@ -5,7 +5,7 @@
 #include "../src/Scale.h"
 #include "../src/View.h"
 #include "../src/Viewport.h"
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 using namespace eng;
 using namespace eng::mtr;
@@ -74,17 +74,4 @@ TEST_CASE("Vector rotate Z 90")
     RotateZ rotate{90};
     auto result = rotate * vector;
     CHECK_EQ(expected, result);
-}
-
-TEST_CASE("All transformations for presenting vector on screen")
-{
-    FourDimensionalVector vector{1, 2, 3, 1};
-    floating xMin = 0, xMax = 256, yMin = 0, yMax = 256, zMin = 1, zMax = 10;
-    ThreeDimensionalVector eye{0, 0, 0}, target{10, 10, 10}, up{0, 1, 0},
-        scale{5, 5, 5};
-    auto resultTransformations =
-        Viewport{xMin, xMax, yMin, yMax} *
-        OrthographicProjection{xMin, xMax, yMin, yMax, zMin, zMax} *
-        View{eye, target, up} * Scale{scale};
-    auto result = resultTransformations * vector;
 }

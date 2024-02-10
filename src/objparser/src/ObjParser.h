@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Elements.h"
+#include "PolygonVertexOnly.h"
 #include <istream>
 #include <iterator>
 #include <string_view>
-#include "PolygonVertexOnly.h"
 
 namespace eng::obj {
 
@@ -18,8 +18,7 @@ Normal strToNormal(std::string_view stringRep);
 std::vector<PolygonIndexes>
 strToPolygonIndexesVector(std::string_view stringRep);
 
-std::vector<numeric>
-strToVerticesIndexes(std::string_view stringRep);
+std::vector<numeric> strToVerticesIndexes(std::string_view stringRep);
 
 template <typename VertexContainer, typename NormalContainer>
 Polygon makePolygon(const std::vector<PolygonIndexes> &indexes,
@@ -62,8 +61,6 @@ inline Object strToType(std::string_view str)
         return Object::Polygon;
     return Object::Nothing;
 }
-
-
 
 template <typename VertexContainer, typename NormalContainer,
           typename FaceContainer>
@@ -110,8 +107,9 @@ void parse(std::istream &stream, VertexContainer &vcont, NormalContainer &ncont,
 }
 
 template <typename VertexContainer, typename PolygonContainer>
-requires std::same_as<typename VertexContainer::value_type, Vertex>
-             && std::same_as<typename PolygonContainer::value_type, PolygonVertexOnly>
+    requires std::same_as<typename VertexContainer::value_type, Vertex> &&
+             std::same_as<typename PolygonContainer::value_type,
+                          PolygonVertexOnly>
 void parseOnlyVerticesAndPolygons(std::istream &stream,
                                   VertexContainer &vertices,
                                   PolygonContainer &polygons)
@@ -122,7 +120,7 @@ void parseOnlyVerticesAndPolygons(std::istream &stream,
     auto vertexParser = [&](std::string_view stringRep) {
         vertexInserter = strToVertex(stringRep);
     };
-    auto polygonParser = [&](std::string_view stringRep){
+    auto polygonParser = [&](std::string_view stringRep) {
         polygonInserter = PolygonVertexOnly::makePolygon(stringRep, vertices);
     };
 

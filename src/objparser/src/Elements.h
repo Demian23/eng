@@ -22,8 +22,7 @@ struct PolygonComponent final {
 };
 
 struct Polygon final : std::vector<PolygonComponent> {
-    Polygon(size_t size) : std::vector<PolygonComponent>(size) {}
+    explicit Polygon(size_t size) : std::vector<PolygonComponent>(size) {}
 };
-
 
 } // namespace eng::obj

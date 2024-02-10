@@ -4,7 +4,7 @@
 #include <vector>
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "../src/ObjParser.h"
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 using namespace eng::obj;
 
@@ -51,9 +51,9 @@ TEST_CASE("Parse stream")
     CHECK(vertices[0] == expectedVertex);
     CHECK(normals[0] == expectedNormal);
     for (auto &&polygon : polygons) {
-        for (auto &&faceComponent : polygon.f) {
-            CHECK(faceComponent.vertex == expectedVertex);
-            CHECK(faceComponent.normal.value_or(Normal{}) == expectedNormal);
+        for (auto &&polygonComponent : polygon) {
+            CHECK(polygonComponent.vertex == expectedVertex);
+            CHECK(polygonComponent.normal == expectedNormal);
         }
     }
 }
@@ -61,7 +61,7 @@ TEST_CASE("Parse stream")
 TEST_CASE("Parse file")
 {
     // TODO from config file
-    std::ifstream file("/Users/egor/Downloads/FinalBaseMesh.obj");
+    std::ifstream file("/Users/yegor/work/objfiles/FinalBaseMesh.obj");
     REQUIRE(file.good());
 
     std::vector<Vertex> vertices;
@@ -90,10 +90,11 @@ TEST_CASE("Parse file")
               << polygons.size() * 4 * sizeof(PolygonComponent) << '\n'
               << "Duration(milliseconds): " << duration.count() << std::endl;
 
-    CHECK(polygons.rbegin()->f.size() == 4);
-    for (unsigned i = 0; i < polygons.begin()->f.size(); i++) {
-        CHECK(polygons.begin()->f[i].normal.value() ==
-              expectedComponents[i].normal.value());
-        CHECK(polygons.begin()->f[i].vertex == expectedComponents[i].vertex);
+    CHECK(polygons.rbegin()->size() == 4);
+    for (unsigned i = 0; i < polygons.begin()->size(); i++) {
+        CHECK(polygons.begin()->operator[](i).normal ==
+              expectedComponents[i].normal);
+        CHECK(polygons.begin()->operator[](i).vertex ==
+              expectedComponents[i].vertex);
     }
 }

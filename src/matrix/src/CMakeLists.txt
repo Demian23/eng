@@ -6,4 +6,4 @@ add_library(mtr STATIC Matrix.h Matrix.cpp
         View.h
         OrthographicProjection.h
         Viewport.h)
-target_link_libraries(mtr PRIVATE base vec)
+target_link_libraries(mtr PUBLIC vec)

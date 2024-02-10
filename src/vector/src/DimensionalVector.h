@@ -1,5 +1,6 @@
 #pragma once
 #include "../../eng.h"
+#include <numeric>
 
 namespace eng::vec {
 
@@ -8,14 +9,13 @@ class DimensionalVector : public std::array<floating, dimensions> {
 public:
     DimensionalVector<dimensions> &normalize()
     {
-        floating len{};
-        for (auto value : *this) {
-            len += value * value;
-        }
-        len = std::sqrt(len);
-        for (auto &value : *this) {
-            value /= len;
-        }
+        floating len = std::sqrt(
+            std::accumulate(this->begin(), this->end(), static_cast<floating>(0),
+                            [](eng::floating res, eng::floating curr) {
+                                return res + curr * curr;
+                            }));
+        std::transform(this->begin(), this->end(), this->begin(),
+                       [len](eng::floating value) { return value / len; });
         return *this;
     }
 
