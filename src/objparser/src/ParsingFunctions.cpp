@@ -1,8 +1,25 @@
-#include "ObjParser.h"
 #include "Elements.h"
+#include "ParsingFunctions.h"
+#include <istream>
+#include <string_view>
 #include <cstdlib>
 
 namespace eng::obj {
+
+uint32_t checkPolygonSize(std::istream& stream){
+    for (std::string line{}; stream.good() && std::getline(stream, line);) {
+        if (line.ends_with('\r'))
+            line.pop_back();
+        auto delimiterPosition = line.find(objectTypeDelimiter);
+        std::string_view element{line.data(), delimiterPosition};
+        std::string_view strRep{line.data() + delimiterPosition + 1,
+                                line.size() - delimiterPosition - 1};
+        if(strToType(element) == Object::Polygon){
+            return strToVerticesIndexes(strRep).size();
+        }
+    }
+    return 0;
+}
 
 vec::ThreeDimensionalVector parseVector(std::string_view stringRep,
                                         char **lastPos)

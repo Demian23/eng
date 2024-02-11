@@ -5,5 +5,6 @@ add_library(mtr STATIC Matrix.h Matrix.cpp
         Rotate.h
         View.h
         OrthographicProjection.h
-        Viewport.h)
+        Viewport.h
+        PerspectiveProjection.h)
 target_link_libraries(mtr PUBLIC vec)

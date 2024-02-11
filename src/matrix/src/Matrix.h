@@ -20,7 +20,8 @@ public:
         matrix_[MatrixDimension - 1][MatrixDimension - 1] = 1.0f;
     }
 
-    explicit Matrix(MatrixRepresentation sourceMatrix) : matrix_(sourceMatrix) {}
+    explicit Matrix(MatrixRepresentation sourceMatrix) : matrix_(sourceMatrix)
+    {}
 
     [[nodiscard]] FourDimensionalVector
     operator*(FourDimensionalVector vector) const noexcept;
@@ -40,9 +41,9 @@ public:
     static Matrix createIdentityMatrix()
     {
         return Matrix{{{{1.0f, 0.0f, 0.0f, 0.0f},
-                  {0.0f, 1.0f, 0.0f, 0.0f},
-                  {0.0f, 0.0f, 1.0f, 0.0f},
-                  {0.0f, 0.0f, 0.0f, 1.0f}}}};
+                        {0.0f, 1.0f, 0.0f, 0.0f},
+                        {0.0f, 0.0f, 1.0f, 0.0f},
+                        {0.0f, 0.0f, 0.0f, 1.0f}}}};
     }
 
 protected:

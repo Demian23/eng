@@ -61,7 +61,7 @@ TEST_CASE("Parse stream")
 TEST_CASE("Parse file")
 {
     // TODO from config file
-    std::ifstream file("/Users/yegor/work/objfiles/FinalBaseMesh.obj");
+    std::ifstream file("/Users/egor/work/objfiles/FinalBaseMesh.obj");
     REQUIRE(file.good());
 
     std::vector<Vertex> vertices;

@@ -1,4 +1,5 @@
 enable_testing()
-add_library(objparser STATIC Elements.h ObjParser.h ObjParser.cpp
+add_library(objparser STATIC Elements.h ObjParser.h ParsingFunctions.cpp
         PolygonVertexOnly.h
-        PolygonVertexOnly.cpp)
+        ParsingFunctions.h
+)
