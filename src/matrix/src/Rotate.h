@@ -9,7 +9,8 @@ namespace eng::mtr {
 
 template <typename T>
 concept arithmetic = std::is_arithmetic_v<T>;
-auto degree_to_rad(arithmetic auto degree) { return degree * M_PI / 180; }
+
+double degree_to_rad(arithmetic auto degree) { return degree * M_PI / 180; }
 
 class RotateX final : public Matrix {
 public:

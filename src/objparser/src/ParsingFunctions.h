@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Elements.h"
+#include <string_view>
 namespace eng::obj {
 
 constexpr char objectTypeDelimiter = ' ';
@@ -28,4 +30,4 @@ uint32_t checkPolygonSize(std::istream &stream);
 
 std::vector<numeric> strToVerticesIndexes(std::string_view stringRep);
 
-}
+} // namespace eng::obj

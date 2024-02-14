@@ -6,8 +6,7 @@
 #include <iostream>
 
 template <typename PolygonType>
-std::vector<PolygonType>
-getPolygons(std::string_view pathToObjFile)
+std::vector<PolygonType> getPolygons(std::string_view pathToObjFile)
 {
     std::fstream objFile(pathToObjFile);
     std::vector<eng::obj::Vertex> vertices;
@@ -16,32 +15,34 @@ getPolygons(std::string_view pathToObjFile)
     return polygons;
 }
 
-int initExecutiveAndRun(std::string_view pathToObjFile){
+int initExecutiveAndRun(std::string_view pathToObjFile, eng::vec::ThreeDimensionalVector cameraEye)
+{
     if (std::filesystem::is_regular_file(pathToObjFile)) {
         uint32_t numberOfVertices = 0;
         {
             std::fstream objFile(pathToObjFile);
-            if(objFile.good()){
+            if (objFile.good()) {
                 numberOfVertices = eng::obj::checkPolygonSize(objFile);
-            }else{
+            } else {
                 std::cerr << pathToObjFile << " mistake happens\n";
                 abort();
             }
         }
         int x, y, w, h;
         Fl::screen_xywh(x, y, w, h);
-        switch(numberOfVertices){
+        switch (numberOfVertices) {
         case 3: {
-            MonoColorDrawer<eng::obj::TriangleVertexOnly> drawer(w, h - 20);
+            MonoColorDrawer<eng::obj::TriangleVertexOnly> drawer(w, h - 20, cameraEye);
             drawer.end();
             drawer.setBackgroundColor({0xFF, 0xFF, 0xFF});
             drawer.setColor({0, 0, 100});
-            drawer.setNewPolygons(getPolygons<eng::obj::TriangleVertexOnly>(pathToObjFile));
+            drawer.setNewPolygons(
+                getPolygons<eng::obj::TriangleVertexOnly>(pathToObjFile));
             drawer.show();
             return Fl::run();
         }
         case 4: {
-            MonoColorDrawer<eng::obj::QuadVertexOnly> drawer(w, h - 20);
+            MonoColorDrawer<eng::obj::QuadVertexOnly> drawer(w, h - 20, cameraEye);
             drawer.end();
             drawer.setBackgroundColor({0xFF, 0xFF, 0xFF});
             drawer.setColor({0, 0, 100});
@@ -51,7 +52,7 @@ int initExecutiveAndRun(std::string_view pathToObjFile){
             return Fl::run();
         }
         default:
-            MonoColorDrawer<eng::obj::PolygonVertexOnly> drawer(w, h - 20);
+            MonoColorDrawer<eng::obj::PolygonVertexOnly> drawer(w, h - 20, cameraEye);
             drawer.end();
             drawer.setBackgroundColor({0xFF, 0xFF, 0xFF});
             drawer.setColor({0, 0, 100});
@@ -64,15 +65,22 @@ int initExecutiveAndRun(std::string_view pathToObjFile){
         std::cerr << pathToObjFile << "is not a regular file!\n";
         abort();
     }
-
 }
 
 int main(int argc, const char *argv[])
 {
-    if (argc == 2) {
-        return initExecutiveAndRun(argv[1]);
+    if (argc == 5) {
+        eng::vec::ThreeDimensionalVector cameraEye{
+            std::stof(argv[2]),
+            static_cast<eng::floating>(
+                eng::mtr::degree_to_rad(std::stof(argv[3]))),
+            static_cast<eng::floating>(
+                eng::mtr::degree_to_rad(std::stof(argv[4])))};
+        return initExecutiveAndRun(argv[1], cameraEye);
     } else {
-        std::cerr << "usage: " << argv[0] << " <path-to-obj-file>";
+        std::cerr << "usage: " << argv[0]
+                  << " <path-to-obj-file> [camera position: "
+                     "<radialLine>,<polarAngle>,<azimuthalAngle>]";
         return 1;
     }
 }

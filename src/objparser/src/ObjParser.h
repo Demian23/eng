@@ -1,21 +1,22 @@
 #pragma once
 
 #include "Elements.h"
-#include "PolygonVertexOnly.h"
 #include "ParsingFunctions.h"
+#include "PolygonVertexOnly.h"
 #include <istream>
 #include <iterator>
 #include <string_view>
 
 namespace eng::obj {
 
-
-
 template <typename VertexContainer, typename PolygonContainer>
     requires std::same_as<typename VertexContainer::value_type, Vertex> &&
-         (std::same_as<typename PolygonContainer::value_type, PolygonVertexOnly> ||
-              std::same_as<typename PolygonContainer::value_type, TriangleVertexOnly> ||
-                  std::same_as<typename PolygonContainer::value_type, QuadVertexOnly>)
+             (std::same_as<typename PolygonContainer::value_type,
+                           PolygonVertexOnly> ||
+              std::same_as<typename PolygonContainer::value_type,
+                           TriangleVertexOnly> ||
+              std::same_as<typename PolygonContainer::value_type,
+                           QuadVertexOnly>)
 void parseOnlyVerticesAndPolygons(std::istream &stream,
                                   VertexContainer &vertices,
                                   PolygonContainer &polygons)
@@ -28,7 +29,8 @@ void parseOnlyVerticesAndPolygons(std::istream &stream,
     };
 
     auto polygonParser = [&](std::string_view stringRep) {
-        polygonInserter = makePolygon<typename PolygonContainer::value_type>(stringRep, vertices);
+        polygonInserter = makePolygon<typename PolygonContainer::value_type>(
+            stringRep, vertices);
     };
 
     for (std::string line{}; stream.good() && std::getline(stream, line);) {

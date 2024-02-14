@@ -2,12 +2,12 @@
 
 #include "Matrix.h"
 
-namespace eng::mtr{
+namespace eng::mtr {
 
-class PerspectiveProjection final : public Matrix{
+class PerspectiveProjection final : public Matrix {
 public:
     PerspectiveProjection(floating xMin, floating xMax, floating yMin,
-        floating yMax, floating zMin, floating zMax)
+                          floating yMax, floating zMin, floating zMax)
     {
         auto width = xMax - xMin;
         auto height = yMax - yMin;
@@ -21,4 +21,4 @@ public:
     }
 };
 
-}
+} // namespace eng::mtr

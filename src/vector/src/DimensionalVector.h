@@ -15,7 +15,7 @@ public:
                 return res + curr * curr;
             }));
         std::transform(this->begin(), this->end(), this->begin(),
-                       [len](eng::floating value) { return value / len; });
+                       [len](auto &&value) { return value /= len; });
         return *this;
     }
 
@@ -50,10 +50,8 @@ template <size_t dimensions>
 floating operator*(const DimensionalVector<dimensions> &a,
                    const DimensionalVector<dimensions> &b)
 {
-    floating result{};
-    for (unsigned i = 0; i < dimensions; i++)
-        result += a[i] * b[i];
-    return result;
+    return std::inner_product(a.begin(), a.end(), b.begin(),
+                              static_cast<floating>(0));
 }
 
 template <size_t dimensions>
@@ -85,7 +83,12 @@ ThreeDimensionalVector
 vectorMultiplication(const ThreeDimensionalVector &a,
                      const ThreeDimensionalVector &b) noexcept;
 
-FourDimensionalVector threeDimensionsToFour(const ThreeDimensionalVector &a,
-                                            floating w) noexcept;
+FourDimensionalVector cartesianToHomogeneous(const ThreeDimensionalVector &a,
+                                             floating w) noexcept;
 
+ThreeDimensionalVector
+homogeneousToCartesian(const FourDimensionalVector &a) noexcept;
+
+ThreeDimensionalVector sphericalToCartesian(
+    const ThreeDimensionalVector &vectorInSphericalNotation) noexcept;
 } // namespace eng::vec
