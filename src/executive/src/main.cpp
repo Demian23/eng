@@ -1,3 +1,4 @@
+#include "../../eng.h"
 #include "../../objparser/src/ObjParser.h"
 #include "MonoColorDrawer.h"
 #include <FL/Fl.H>
@@ -15,7 +16,8 @@ std::vector<PolygonType> getPolygons(std::string_view pathToObjFile)
     return polygons;
 }
 
-int initExecutiveAndRun(std::string_view pathToObjFile, eng::vec::ThreeDimensionalVector cameraEye)
+int initExecutiveAndRun(std::string_view pathToObjFile,
+                        eng::vec::ThreeDimensionalVector cameraEye)
 {
     if (std::filesystem::is_regular_file(pathToObjFile)) {
         uint32_t numberOfVertices = 0;
@@ -32,7 +34,8 @@ int initExecutiveAndRun(std::string_view pathToObjFile, eng::vec::ThreeDimension
         Fl::screen_xywh(x, y, w, h);
         switch (numberOfVertices) {
         case 3: {
-            MonoColorDrawer<eng::obj::TriangleVertexOnly> drawer(w, h - 20, cameraEye);
+            MonoColorDrawer<eng::obj::TriangleVertexOnly> drawer(w, h - 20,
+                                                                 cameraEye);
             drawer.end();
             drawer.setBackgroundColor({0xFF, 0xFF, 0xFF});
             drawer.setColor({0, 0, 100});
@@ -42,7 +45,8 @@ int initExecutiveAndRun(std::string_view pathToObjFile, eng::vec::ThreeDimension
             return Fl::run();
         }
         case 4: {
-            MonoColorDrawer<eng::obj::QuadVertexOnly> drawer(w, h - 20, cameraEye);
+            MonoColorDrawer<eng::obj::QuadVertexOnly> drawer(w, h - 20,
+                                                             cameraEye);
             drawer.end();
             drawer.setBackgroundColor({0xFF, 0xFF, 0xFF});
             drawer.setColor({0, 0, 100});
@@ -52,7 +56,8 @@ int initExecutiveAndRun(std::string_view pathToObjFile, eng::vec::ThreeDimension
             return Fl::run();
         }
         default:
-            MonoColorDrawer<eng::obj::PolygonVertexOnly> drawer(w, h - 20, cameraEye);
+            MonoColorDrawer<eng::obj::PolygonVertexOnly> drawer(w, h - 20,
+                                                                cameraEye);
             drawer.end();
             drawer.setBackgroundColor({0xFF, 0xFF, 0xFF});
             drawer.setColor({0, 0, 100});
@@ -72,10 +77,9 @@ int main(int argc, const char *argv[])
     if (argc == 5) {
         eng::vec::ThreeDimensionalVector cameraEye{
             std::stof(argv[2]),
+            static_cast<eng::floating>(eng::degreeToRadian(std::stod(argv[3]))),
             static_cast<eng::floating>(
-                eng::mtr::degree_to_rad(std::stof(argv[3]))),
-            static_cast<eng::floating>(
-                eng::mtr::degree_to_rad(std::stof(argv[4])))};
+                eng::degreeToRadian(std::stod(argv[4])))};
         return initExecutiveAndRun(argv[1], cameraEye);
     } else {
         std::cerr << "usage: " << argv[0]

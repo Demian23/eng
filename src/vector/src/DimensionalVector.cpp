@@ -1,14 +1,15 @@
 #include "DimensionalVector.h"
 namespace eng::vec {
 
-ThreeDimensionalVector
-vectorMultiplication(const ThreeDimensionalVector &a,
-                     const ThreeDimensionalVector &b) noexcept
+FourDimensionalVector
+vectorMultiplicationForCartesian(const FourDimensionalVector &a,
+                     const FourDimensionalVector &b) noexcept
 {
-    ThreeDimensionalVector result;
+    FourDimensionalVector result;
     result[0] = a[1] * b[2] - a[2] * b[1];
     result[1] = a[2] * b[0] - a[0] * b[2];
     result[2] = a[0] * b[1] - a[1] * b[0];
+    result[3] = 0;
     return result;
 }
 FourDimensionalVector cartesianToHomogeneous(const ThreeDimensionalVector &a,
@@ -39,4 +40,17 @@ ThreeDimensionalVector sphericalToCartesian(
         radialLine * std::sin(polarAngleInRad) * std::sin(azimuthalAngleInRad),
         radialLine * std::cos(polarAngleInRad)};
 }
+
+
+ThreeDimensionalVector cartesianToSpherical(
+    const ThreeDimensionalVector& cartesianVector) noexcept
+{
+    ThreeDimensionalVector result{};
+    auto vectorLen = cartesianVector.length();
+    result[0] = vectorLen;
+    result[1] = std::acos(cartesianVector[2] / vectorLen);
+    result[2] = std::atan2(cartesianVector[1], cartesianVector[0]);
+    return result;
+}
+
 } // namespace eng::vec

@@ -7,40 +7,41 @@
 
 namespace eng::mtr {
 
-template <typename T>
-concept arithmetic = std::is_arithmetic_v<T>;
-
-double degree_to_rad(arithmetic auto degree) { return degree * M_PI / 180; }
-
 class RotateX final : public Matrix {
 public:
-    template <typename T> explicit RotateX(T degree)
+    explicit RotateX(double degree)
     {
         matrix_[0][0] = 1.0f;
-        matrix_[1][1] = matrix_[2][2] = std::cos(degree_to_rad(degree));
-        matrix_[2][1] = std::sin(degree_to_rad(degree));
+        matrix_[1][1] = matrix_[2][2] =
+            static_cast<eng::floating>(std::cos(degreeToRadian(degree)));
+        matrix_[2][1] =
+            static_cast<eng::floating>(std::sin(degreeToRadian(degree)));
         matrix_[1][2] = -matrix_[2][1];
     }
 };
 
 class RotateY final : public Matrix {
 public:
-    template <typename T> explicit RotateY(T degree)
+    explicit RotateY(double degree)
     {
         matrix_[1][1] = 1.0f;
-        matrix_[0][0] = matrix_[2][2] = std::cos(degree_to_rad(degree));
-        matrix_[0][2] = std::sin(degree_to_rad(degree));
+        matrix_[0][0] = matrix_[2][2] =
+            static_cast<eng::floating>(std::cos(degreeToRadian(degree)));
+        matrix_[0][2] =
+            static_cast<eng::floating>(std::sin(degreeToRadian(degree)));
         matrix_[2][0] = -matrix_[0][2];
     }
 };
 
 class RotateZ final : public Matrix {
 public:
-    template <typename T> explicit RotateZ(T degree)
+    explicit RotateZ(double degree)
     {
         matrix_[2][2] = 1.0f;
-        matrix_[0][0] = matrix_[1][1] = std::cos(degree_to_rad(degree));
-        matrix_[1][0] = std::sin(degree_to_rad(degree));
+        matrix_[0][0] = matrix_[1][1] =
+            static_cast<eng::floating>(std::cos(degreeToRadian(degree)));
+        matrix_[1][0] =
+            static_cast<eng::floating>(std::sin(degreeToRadian(degree)));
         matrix_[0][1] = -matrix_[1][0];
     }
 };

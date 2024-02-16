@@ -7,13 +7,17 @@ namespace eng::vec {
 template <size_t dimensions>
 class DimensionalVector : public std::array<floating, dimensions> {
 public:
-    DimensionalVector<dimensions> &normalize()
-    {
-        floating len = std::sqrt(std::accumulate(
+    [[nodiscard]]
+    floating length() const noexcept{
+        return  std::sqrt(std::accumulate(
             this->begin(), this->end(), static_cast<floating>(0),
             [](eng::floating res, eng::floating curr) {
                 return res + curr * curr;
             }));
+    }
+    DimensionalVector<dimensions> &normalize()
+    {
+        floating len = length();
         std::transform(this->begin(), this->end(), this->begin(),
                        [len](auto &&value) { return value /= len; });
         return *this;
@@ -79,9 +83,9 @@ DimensionalVector<dimensions> normalize(DimensionalVector<dimensions> from)
 using ThreeDimensionalVector = DimensionalVector<3>;
 using FourDimensionalVector = DimensionalVector<4>;
 
-ThreeDimensionalVector
-vectorMultiplication(const ThreeDimensionalVector &a,
-                     const ThreeDimensionalVector &b) noexcept;
+FourDimensionalVector
+vectorMultiplicationForCartesian(const FourDimensionalVector &a,
+                     const FourDimensionalVector &b) noexcept;
 
 FourDimensionalVector cartesianToHomogeneous(const ThreeDimensionalVector &a,
                                              floating w) noexcept;
@@ -90,5 +94,9 @@ ThreeDimensionalVector
 homogeneousToCartesian(const FourDimensionalVector &a) noexcept;
 
 ThreeDimensionalVector sphericalToCartesian(
-    const ThreeDimensionalVector &vectorInSphericalNotation) noexcept;
+    const ThreeDimensionalVector& vectorInSphericalNotation) noexcept;
+
+ThreeDimensionalVector cartesianToSpherical(
+    const ThreeDimensionalVector& cartesianVector) noexcept;
+
 } // namespace eng::vec
