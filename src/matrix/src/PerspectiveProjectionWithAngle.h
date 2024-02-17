@@ -6,11 +6,11 @@ namespace eng::mtr {
 
 class PerspectiveProjectionWithAngle : public Matrix {
 public:
-    PerspectiveProjectionWithAngle(double degreeInRad, floating aspect,
+    PerspectiveProjectionWithAngle(floating degreeInRad, floating aspect,
                                    floating zMin, floating zMax)
     {
         auto zDiff = zMin - zMax;
-        auto angle = degreeInRad / 2;
+        auto angle = static_cast<floating>(degreeInRad / 2);
         matrix_[0][0] = static_cast<floating>(1 / (aspect * std::tan(angle)));
         matrix_[1][1] = static_cast<floating>(1 / std::tan(angle));
         matrix_[2][2] = zMax / zDiff;

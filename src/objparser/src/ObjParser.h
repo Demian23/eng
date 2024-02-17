@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Elements.h"
+#include "../../base/src/Elements.h"
+#include "../../base/src/PolygonVertexOnly.h"
 #include "ParsingFunctions.h"
-#include "PolygonVertexOnly.h"
 #include <istream>
 #include <iterator>
 #include <string_view>

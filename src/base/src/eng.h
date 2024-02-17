@@ -7,9 +7,9 @@ namespace eng {
 using numeric = long;
 using floating = float;
 
-double degreeToRadian(std::floating_point auto degree)
+inline floating degreeToRadian(floating degree)
 {
-    return degree * std::numbers::pi / 180;
+    return degree * std::numbers::pi_v<floating> / 180;
 }
 
 } // namespace eng

@@ -1,9 +1,9 @@
 #pragma once
 
+#include "../../objparser/src/ParsingFunctions.h"
 #include "Elements.h"
-#include "ParsingFunctions.h"
 
-namespace eng::obj {
+namespace eng {
 struct PolygonVertexOnly final : std::vector<Vertex> {};
 
 struct TriangleVertexOnly final : std::array<Vertex, 3> {};
@@ -13,7 +13,7 @@ template <typename PolygonType>
 PolygonType makePolygon(std::string_view strRep,
                         const std::vector<Vertex> &allVertex)
 {
-    const std::vector<numeric> indexes = strToVerticesIndexes(strRep);
+    const std::vector<numeric> indexes = obj::strToVerticesIndexes(strRep);
     PolygonType newPolygon{};
     if constexpr (std::is_same_v<PolygonType, PolygonVertexOnly>) {
         newPolygon.resize(indexes.size());

@@ -2,7 +2,7 @@
 namespace eng::vec {
 
 FourDimensionalVector
-vectorMultiplicationForCartesian(const FourDimensionalVector &a,
+vectorMultiplicationForHomogeneous(const FourDimensionalVector &a,
                      const FourDimensionalVector &b) noexcept
 {
     FourDimensionalVector result;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../algorithm/src/alg.h"
+#include "../../base/src/PolygonVertexOnly.h"
 #include "../../matrix/src/Move.h"
 #include "../../matrix/src/OrthographicProjection.h"
 #include "../../matrix/src/PerspectiveProjection.h"
@@ -9,7 +10,6 @@
 #include "../../matrix/src/Scale.h"
 #include "../../matrix/src/View.h"
 #include "../../matrix/src/Viewport.h"
-#include "../../objparser/src/PolygonVertexOnly.h"
 #include "MonoColorDrawer.h"
 #include "RGBArray.h"
 #include "RGBArrayInserter.h"
@@ -24,14 +24,11 @@ public:
     inline void setColor(RGB newColor) { color = newColor; }
 
     // TODO: target, polygons and color are one creature
-    MonoColorDrawer(int width, int height,
-                    eng::vec::ThreeDimensionalVector cameraEye,
-                    eng::vec::ThreeDimensionalVector targetPosition = {0, 0, 0})
+    MonoColorDrawer(int width, int height)
         : Fl_Window{width, height}, polygons{},
           screenArray{static_cast<uint64_t>(width * height),
                       {0xFF, 0xFF, 0xFF}},
-          backgroundColor{0xFF, 0xFF, 0xFF}, color{0, 0, 0}, eye{cameraEye},
-          target{targetPosition}
+          backgroundColor{0xFF, 0xFF, 0xFF}, color{0, 0, 0}
     {}
 
     [[nodiscard]] std::vector<PolygonType> applyTransformation() const noexcept
@@ -41,8 +38,8 @@ public:
         using namespace eng::vec;
         using namespace std;
         floating xMin = 0, xMax = xMin + static_cast<floating>(w()), yMin = 0,
-                 yMax = yMin + static_cast<floating>(h()), zMin = 0.1,
-                 zMax = 10;
+                 yMax = yMin + static_cast<floating>(h()), zMin = 0.1f,
+                 zMax = 10.0f;
         auto angleInRad =
             degreeToRadian(90.0); // TODO: user wanna change that value
         auto aspect = (xMax - xMin) / (yMax - yMin);
@@ -53,10 +50,9 @@ public:
         auto projection =
             PerspectiveProjectionWithAngle{angleInRad, aspect, zMin, zMax};
         // OrthographicProjection{xMin, xMax, yMin, yMax, zMin, zMax};
-        // PerspectiveProjection{xMin, xMax, yMin, yMax, zMin, zMax}
-        auto transformations =
-            Viewport{xMin, xMax, yMin, yMax} * projection *
-            View{eng::vec::sphericalToCartesian(eye), target};
+       auto transformations = projection;
+     //       Viewport{xMin, xMax, yMin, yMax} * projection *
+      //      View{eng::vec::sphericalToCartesian(eye), target};
 
         for (auto &polygon : copy)
             transform(
@@ -140,6 +136,4 @@ private:
     std::vector<PolygonType> polygons;
     RGBArray screenArray;
     RGB backgroundColor, color;
-    eng::vec::ThreeDimensionalVector eye;
-    eng::vec::ThreeDimensionalVector target;
 };

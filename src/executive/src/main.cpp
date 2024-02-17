@@ -1,4 +1,4 @@
-#include "../../eng.h"
+#include "../../base/src/eng.h"
 #include "../../objparser/src/ObjParser.h"
 #include "MonoColorDrawer.h"
 #include <FL/Fl.H>
@@ -34,8 +34,7 @@ int initExecutiveAndRun(std::string_view pathToObjFile,
         Fl::screen_xywh(x, y, w, h);
         switch (numberOfVertices) {
         case 3: {
-            MonoColorDrawer<eng::obj::TriangleVertexOnly> drawer(w, h - 20,
-                                                                 cameraEye);
+            MonoColorDrawer<eng::obj::TriangleVertexOnly> drawer(w, h - 20);
             drawer.end();
             drawer.setBackgroundColor({0xFF, 0xFF, 0xFF});
             drawer.setColor({0, 0, 100});
@@ -45,8 +44,7 @@ int initExecutiveAndRun(std::string_view pathToObjFile,
             return Fl::run();
         }
         case 4: {
-            MonoColorDrawer<eng::obj::QuadVertexOnly> drawer(w, h - 20,
-                                                             cameraEye);
+            MonoColorDrawer<eng::obj::QuadVertexOnly> drawer(w, h - 20);
             drawer.end();
             drawer.setBackgroundColor({0xFF, 0xFF, 0xFF});
             drawer.setColor({0, 0, 100});
@@ -56,8 +54,7 @@ int initExecutiveAndRun(std::string_view pathToObjFile,
             return Fl::run();
         }
         default:
-            MonoColorDrawer<eng::obj::PolygonVertexOnly> drawer(w, h - 20,
-                                                                cameraEye);
+            MonoColorDrawer<eng::obj::PolygonVertexOnly> drawer(w, h - 20);
             drawer.end();
             drawer.setBackgroundColor({0xFF, 0xFF, 0xFF});
             drawer.setColor({0, 0, 100});
@@ -77,9 +74,9 @@ int main(int argc, const char *argv[])
     if (argc == 5) {
         eng::vec::ThreeDimensionalVector cameraEye{
             std::stof(argv[2]),
-            static_cast<eng::floating>(eng::degreeToRadian(std::stod(argv[3]))),
+            static_cast<eng::floating>(eng::degreeToRadian(std::stof(argv[3]))),
             static_cast<eng::floating>(
-                eng::degreeToRadian(std::stod(argv[4])))};
+                eng::degreeToRadian(std::stof(argv[4])))};
         return initExecutiveAndRun(argv[1], cameraEye);
     } else {
         std::cerr << "usage: " << argv[0]

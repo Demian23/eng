@@ -1,5 +1,5 @@
 #pragma once
-#include "../../eng.h"
+#include "../../base/src/eng.h"
 #include <numeric>
 
 namespace eng::vec {
@@ -84,7 +84,7 @@ using ThreeDimensionalVector = DimensionalVector<3>;
 using FourDimensionalVector = DimensionalVector<4>;
 
 FourDimensionalVector
-vectorMultiplicationForCartesian(const FourDimensionalVector &a,
+vectorMultiplicationForHomogeneous(const FourDimensionalVector &a,
                      const FourDimensionalVector &b) noexcept;
 
 FourDimensionalVector cartesianToHomogeneous(const ThreeDimensionalVector &a,

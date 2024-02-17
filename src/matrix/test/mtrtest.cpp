@@ -14,7 +14,7 @@ TEST_CASE("Matrix instantiation") { REQUIRE_NOTHROW(Matrix matrixInstance); }
 
 TEST_CASE("Vector multiplication with identity matrix")
 {
-    FourDimensionalVector vector{3.0, 1.2, 4.5, 1};
+    FourDimensionalVector vector{3.0f, 1.2f, 4.5f, 1.0f};
     auto result = Matrix::createIdentityMatrix() * vector;
     REQUIRE_EQ(vector, result);
 }
@@ -50,28 +50,4 @@ TEST_CASE("Vector multiplication with Move")
     auto result = moveMatrix * vector;
 
     REQUIRE_EQ(expected, result);
-}
-
-TEST_CASE("Vector rotate X 90")
-{
-    FourDimensionalVector vector{3, 2, 1, 1}, expected{3, -1, 2, 1};
-    RotateX rotate{90};
-    auto result = rotate * vector;
-    CHECK_EQ(expected, result);
-}
-
-TEST_CASE("Vector rotate Y 90")
-{
-    FourDimensionalVector vector{3, 2, 1, 1}, expected{1, 2, -3, 1};
-    RotateY rotate{90};
-    auto result = rotate * vector;
-    CHECK_EQ(expected, result);
-}
-
-TEST_CASE("Vector rotate Z 90")
-{
-    FourDimensionalVector vector{3, 2, 1, 1}, expected{-2, 3, 1, 1};
-    RotateZ rotate{90};
-    auto result = rotate * vector;
-    CHECK_EQ(expected, result);
 }

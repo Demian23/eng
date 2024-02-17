@@ -4,4 +4,4 @@ add_executable(executive main.cpp
         MonoColorDrawer.h)
 
 find_library(FLTK NAME fltk)
-target_link_libraries(executive PRIVATE objparser mtr FLTK)
+target_link_libraries(executive PRIVATE options warnings objparser mtr FLTK)

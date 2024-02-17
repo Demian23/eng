@@ -1,15 +1,12 @@
 #pragma once
 
 #include "../../vector/src/DimensionalVector.h"
-#include <optional>
 #include <vector>
 
-namespace eng::obj {
+namespace eng {
 
 using Vertex = vec::FourDimensionalVector;
 using Normal = vec::ThreeDimensionalVector;
-
-enum { MinimalPolygonComponents = 3 };
 
 struct PolygonIndexes {
     numeric vertexIndex;

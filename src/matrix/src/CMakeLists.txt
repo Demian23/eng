@@ -8,4 +8,4 @@ add_library(mtr STATIC Matrix.h Matrix.cpp
         Viewport.h
         PerspectiveProjection.h
         PerspectiveProjectionWithAngle.h)
-target_link_libraries(mtr PUBLIC vec)
+target_link_libraries(mtr PUBLIC options warnings vec)

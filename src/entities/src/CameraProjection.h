@@ -1,19 +1,21 @@
 #pragma once
 
-#include "../../eng.h"
+#include "../../base/src/eng.h"
 #include "../../matrix/src/Matrix.h"
 
 namespace eng::ent {
 
+enum class ProjectionType{Orthographic, Perspective};
+
 class CameraProjection {
 public:
-    enum class ProjectionType{Orthographic, Perspective};
-    CameraProjection(floating w, floating h, floating zMin, floating zMax, floating angle);
+    CameraProjection(floating w, floating h, floating zMin, floating zMax, floating projectionAngle) noexcept
+        : width{w}, height{h}, zNear{zMin}, zFar{zMax}, angle{projectionAngle}{}
     [[nodiscard]]
     inline floating getAngleInDegrees()const noexcept{return angle;}
     inline void setAngleInDegrees(floating newAngle){angle = newAngle;}
     [[nodiscard]]
-    mtr::Matrix getProjectionMatrix(ProjectionType projectionType) const;
+    mtr::Matrix getProjectionMatrix(ProjectionType projectionType) const noexcept;
 private:
     floating width, height;
     floating zNear, zFar;

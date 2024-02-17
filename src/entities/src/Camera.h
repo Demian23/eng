@@ -5,28 +5,29 @@
 
 namespace eng::ent {
 
-class Camera {
+class Camera final {
 public:
     Camera(vec::ThreeDimensionalVector cameraEye,
            vec::ThreeDimensionalVector cameraTarget,
-           vec::ThreeDimensionalVector cameraUp);
+           vec::ThreeDimensionalVector cameraUp) noexcept;
 
+    [[nodiscard]]
     mtr::Matrix getViewMatrix()const noexcept;
 
-    void rotateX(double degree);
-    void rotateY(double degree);
-    void rotateZ(double degree);
+    void rotateX(floating degree) noexcept;
+    void rotateY(floating degree) noexcept;
+    void rotateZ(floating degree) noexcept;
 
-    void moveAlongDiagonal(floating movement);
-    void changePolarAngle(floating addition);
-    void changeAzimuthalAngle(floating addition);
+    void moveAlongDiagonal(floating movement) noexcept;
+    void changePolarAngle(floating addition) noexcept;
+    void changeAzimuthalAngle(floating addition) noexcept;
 
 private:
     vec::FourDimensionalVector eye;
     vec::FourDimensionalVector target;
     vec::FourDimensionalVector up;
 
-    void changeEyeAsSphericalVector(int index, floating addition);
+    void changeEyeAsSphericalVector(unsigned index, floating addition) noexcept;
 };
 
 } // namespace eng::ent

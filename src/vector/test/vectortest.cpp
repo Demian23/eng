@@ -38,7 +38,7 @@ TEST_CASE("Vector mul")
 
 TEST_CASE("Vector vector mul")
 {
-    ThreeDimensionalVector a{2, 3, 4}, b{5, 6, 7}, expected{-3, 6, -3};
-    auto result = vectorMultiplication(a, b);
+    FourDimensionalVector a{2, 3, 4, 0}, b{5, 6, 7, 0}, expected{-3, 6, -3, 0};
+    auto result = vectorMultiplicationForHomogeneous(a, b);
     REQUIRE_EQ(expected, result);
 }

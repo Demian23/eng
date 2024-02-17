@@ -1,5 +1,5 @@
 #include "ParsingFunctions.h"
-#include "Elements.h"
+#include "../../base/src/Elements.h"
 #include <cstdlib>
 #include <istream>
 #include <string_view>
@@ -16,7 +16,7 @@ uint32_t checkPolygonSize(std::istream &stream)
         std::string_view strRep{line.data() + delimiterPosition + 1,
                                 line.size() - delimiterPosition - 1};
         if (strToType(element) == Object::Polygon) {
-            return strToVerticesIndexes(strRep).size();
+            return static_cast<uint32_t>(strToVerticesIndexes(strRep).size());
         }
     }
     return 0;
