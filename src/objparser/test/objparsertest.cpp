@@ -7,6 +7,7 @@
 #include <doctest/doctest.h>
 
 using namespace eng::obj;
+using namespace eng;
 
 TEST_CASE("Parsing vertex")
 {

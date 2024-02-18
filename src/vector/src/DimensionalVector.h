@@ -1,5 +1,7 @@
 #pragma once
 #include "../../base/src/eng.h"
+#include <algorithm>
+#include <array>
 #include <numeric>
 
 namespace eng::vec {
@@ -7,9 +9,9 @@ namespace eng::vec {
 template <size_t dimensions>
 class DimensionalVector : public std::array<floating, dimensions> {
 public:
-    [[nodiscard]]
-    floating length() const noexcept{
-        return  std::sqrt(std::accumulate(
+    [[nodiscard]] floating length() const noexcept
+    {
+        return std::sqrt(std::accumulate(
             this->begin(), this->end(), static_cast<floating>(0),
             [](eng::floating res, eng::floating curr) {
                 return res + curr * curr;
@@ -85,7 +87,7 @@ using FourDimensionalVector = DimensionalVector<4>;
 
 FourDimensionalVector
 vectorMultiplicationForHomogeneous(const FourDimensionalVector &a,
-                     const FourDimensionalVector &b) noexcept;
+                                   const FourDimensionalVector &b) noexcept;
 
 FourDimensionalVector cartesianToHomogeneous(const ThreeDimensionalVector &a,
                                              floating w) noexcept;
@@ -94,9 +96,9 @@ ThreeDimensionalVector
 homogeneousToCartesian(const FourDimensionalVector &a) noexcept;
 
 ThreeDimensionalVector sphericalToCartesian(
-    const ThreeDimensionalVector& vectorInSphericalNotation) noexcept;
+    const ThreeDimensionalVector &vectorInSphericalNotation) noexcept;
 
-ThreeDimensionalVector cartesianToSpherical(
-    const ThreeDimensionalVector& cartesianVector) noexcept;
+ThreeDimensionalVector
+cartesianToSpherical(const ThreeDimensionalVector &cartesianVector) noexcept;
 
 } // namespace eng::vec

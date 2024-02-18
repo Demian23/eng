@@ -12,10 +12,8 @@ public:
     explicit RotateX(floating degree)
     {
         matrix_[0][0] = 1.0f;
-        matrix_[1][1] = matrix_[2][2] =
-            std::cos(degreeToRadian(degree));
-        matrix_[2][1] =
-            std::sin(degreeToRadian(degree));
+        matrix_[1][1] = matrix_[2][2] = std::cos(degreeToRadian(degree));
+        matrix_[2][1] = std::sin(degreeToRadian(degree));
         matrix_[1][2] = -matrix_[2][1];
     }
 };
@@ -25,10 +23,8 @@ public:
     explicit RotateY(floating degree)
     {
         matrix_[1][1] = 1.0f;
-        matrix_[0][0] = matrix_[2][2] =
-            std::cos(degreeToRadian(degree));
-        matrix_[0][2] =
-            std::sin(degreeToRadian(degree));
+        matrix_[0][0] = matrix_[2][2] = std::cos(degreeToRadian(degree));
+        matrix_[0][2] = std::sin(degreeToRadian(degree));
         matrix_[2][0] = -matrix_[0][2];
     }
 };
@@ -38,10 +34,8 @@ public:
     explicit RotateZ(floating degree)
     {
         matrix_[2][2] = 1.0f;
-        matrix_[0][0] = matrix_[1][1] =
-            std::cos(degreeToRadian(degree));
-        matrix_[1][0] =
-            std::sin(degreeToRadian(degree));
+        matrix_[0][0] = matrix_[1][1] = std::cos(degreeToRadian(degree));
+        matrix_[1][0] = std::sin(degreeToRadian(degree));
         matrix_[0][1] = -matrix_[1][0];
     }
 };

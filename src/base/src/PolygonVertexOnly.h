@@ -4,6 +4,7 @@
 #include "Elements.h"
 
 namespace eng {
+
 struct PolygonVertexOnly final : std::vector<Vertex> {};
 
 struct TriangleVertexOnly final : std::array<Vertex, 3> {};
@@ -30,4 +31,4 @@ PolygonType makePolygon(std::string_view strRep,
     return newPolygon;
 }
 
-} // namespace eng::obj
+} // namespace eng

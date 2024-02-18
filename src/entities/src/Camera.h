@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../../matrix/src/Matrix.h"
 #include "../../vector/src/DimensionalVector.h"
-#include "../../matrix/src/View.h"
 
 namespace eng::ent {
 
@@ -11,8 +11,7 @@ public:
            vec::ThreeDimensionalVector cameraTarget,
            vec::ThreeDimensionalVector cameraUp) noexcept;
 
-    [[nodiscard]]
-    mtr::Matrix getViewMatrix()const noexcept;
+    [[nodiscard]] mtr::Matrix getViewMatrix() const noexcept;
 
     void rotateX(floating degree) noexcept;
     void rotateY(floating degree) noexcept;
@@ -31,4 +30,3 @@ private:
 };
 
 } // namespace eng::ent
-

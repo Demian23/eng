@@ -3,7 +3,7 @@ namespace eng::vec {
 
 FourDimensionalVector
 vectorMultiplicationForHomogeneous(const FourDimensionalVector &a,
-                     const FourDimensionalVector &b) noexcept
+                                   const FourDimensionalVector &b) noexcept
 {
     FourDimensionalVector result;
     result[0] = a[1] * b[2] - a[2] * b[1];
@@ -41,9 +41,8 @@ ThreeDimensionalVector sphericalToCartesian(
         radialLine * std::cos(polarAngleInRad)};
 }
 
-
-ThreeDimensionalVector cartesianToSpherical(
-    const ThreeDimensionalVector& cartesianVector) noexcept
+ThreeDimensionalVector
+cartesianToSpherical(const ThreeDimensionalVector &cartesianVector) noexcept
 {
     ThreeDimensionalVector result{};
     auto vectorLen = cartesianVector.length();

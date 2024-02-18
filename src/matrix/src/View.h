@@ -11,7 +11,8 @@ public:
          FourDimensionalVector up)
     {
         auto zAxis = (eye - target).normalize();
-        auto xAxis = (vec::vectorMultiplicationForHomogeneous(zAxis, up)).normalize();
+        auto xAxis =
+            (vec::vectorMultiplicationForHomogeneous(zAxis, up)).normalize();
         auto yAxis = up; // vec::vectorMultiplication(xAxis, zAxis); // ?
 
         xAxis[3] = -(xAxis * eye);

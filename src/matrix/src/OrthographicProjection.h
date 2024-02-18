@@ -6,7 +6,8 @@ namespace eng::mtr {
 
 class OrthographicProjection : public Matrix {
 public:
-    OrthographicProjection(floating width, floating height, floating zMin, floating zMax)
+    OrthographicProjection(floating width, floating height, floating zMin,
+                           floating zMax)
     {
         matrix_[0][0] = 2.0f / width;
         matrix_[1][1] = 2.0f / height;
