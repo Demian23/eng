@@ -21,6 +21,13 @@ public:
     void changePolarAngle(floating addition) noexcept;
     void changeAzimuthalAngle(floating addition) noexcept;
 
+    void moveTarget(vec::ThreeDimensionalVector position) noexcept;
+
+    [[nodiscard]] inline eng::floating getDiagonalLength() const noexcept
+    {
+        return eye.length();
+    }
+
 private:
     vec::FourDimensionalVector eye;
     vec::FourDimensionalVector target;

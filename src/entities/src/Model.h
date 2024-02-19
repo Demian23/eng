@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../base/src/PolygonVertexOnly.h"
+#include "../../matrix/src/Move.h"
 #include "../../matrix/src/Rotate.h"
 #include "../../matrix/src/Scale.h"
 #include <vector>
@@ -16,37 +17,53 @@ template <typename T>
     requires PolygonType<T>
 class Model {
 public:
-    Model(std::vector<T> outerPolygons) 
-        : polygons{std::move(outerPolygons)}, modelMatrix(mtr::Matrix::createIdentityMatrix()){}
+    Model(std::vector<T> outerPolygons)
+        : polygons{std::move(outerPolygons)},
+          modelMatrix(mtr::Matrix::createIdentityMatrix())
+    {}
 
     [[nodiscard]] inline mtr::Matrix getModelMatrix() const noexcept
     {
         return modelMatrix;
     }
 
-    void rotateX(floating degree)
+    void rotateX(floating degree) noexcept
     {
-        modelMatrix = mtr::RotateX{degree} * modelMatrix; 
+        modelMatrix = mtr::RotateX{degree} * modelMatrix;
     }
 
-    void rotateY(floating degree)
+    void rotateY(floating degree) noexcept
     {
-        modelMatrix = mtr::RotateY{degree} * modelMatrix; 
+        modelMatrix = mtr::RotateY{degree} * modelMatrix;
     }
 
-    void rotateZ(floating degree)
+    void rotateZ(floating degree) noexcept
     {
-        modelMatrix = mtr::RotateZ{degree} * modelMatrix; 
+        modelMatrix = mtr::RotateZ{degree} * modelMatrix;
     }
 
-    void scale(floating on) noexcept{
+    void scale(floating on) noexcept
+    {
         modelMatrix = mtr::Scale{{on, on, on}} * modelMatrix;
     }
 
-    auto getPolygonsBegin() const noexcept {return polygons.cbegin();}
-    auto getPolygonsEnd() const noexcept {return polygons.cend();}
+    void move(vec::ThreeDimensionalVector where) noexcept
+    {
+        modelMatrix = mtr::Move{where} * modelMatrix;
+    }
 
-    inline bool empty()const noexcept{return polygons.empty();}
+    void clearModelMatrix() noexcept
+    {
+        modelMatrix = mtr::Matrix::createIdentityMatrix();
+    }
+
+    auto getPolygonsBegin() const noexcept { return polygons.cbegin(); }
+    auto getPolygonsEnd() const noexcept { return polygons.cend(); }
+
+    [[nodiscard]] inline bool empty() const noexcept
+    {
+        return polygons.empty();
+    }
 
 private:
     std::vector<T> polygons;

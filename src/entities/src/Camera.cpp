@@ -1,6 +1,7 @@
 #include "Camera.h"
-#include "../../matrix/src/View.h"
+#include "../../matrix/src/Move.h"
 #include "../../matrix/src/Rotate.h"
+#include "../../matrix/src/View.h"
 
 namespace eng::ent {
 
@@ -48,12 +49,17 @@ void Camera::moveAlongDiagonal(floating movement) noexcept
 }
 void Camera::changePolarAngle(floating addition) noexcept
 {
-    changeEyeAsSphericalVector(1, addition);
+    changeEyeAsSphericalVector(1, degreeToRadian(addition));
 }
 
 void Camera::changeAzimuthalAngle(floating addition) noexcept
 {
-    changeEyeAsSphericalVector(2, addition);
+    changeEyeAsSphericalVector(2, degreeToRadian(addition));
+}
+
+void Camera::moveTarget(vec::ThreeDimensionalVector position) noexcept
+{
+    target = mtr::Move{position} * target;
 }
 
 } // namespace eng::ent

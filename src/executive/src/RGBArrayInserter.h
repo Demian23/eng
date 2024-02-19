@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <iterator>
 
-
 class RGBArrayInserter final {
 public:
     using iterator_category = std::output_iterator_tag;
@@ -13,7 +12,7 @@ public:
     using pointer = void;
     using reference = void;
     using _Container = RGBArray;
-    
+
     RGBArrayInserter(RGBArray &arr, RGB inserted, uint64_t xSize)
         : arr_(arr), pixel_(inserted), xSize_(xSize)
     {}

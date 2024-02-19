@@ -19,10 +19,19 @@ public:
         return angle;
     }
 
-    inline void setAngleInDegrees(floating newAngle) noexcept { angle = newAngle; }
+    inline void setAngleInDegrees(floating newAngle) noexcept
+    {
+        angle = newAngle;
+    }
 
     [[nodiscard]] mtr::Matrix
     getProjectionMatrix(ProjectionType projectionType) const noexcept;
+
+    [[nodiscard]] std::pair<eng::floating, eng::floating>
+    getZComponent() const noexcept
+    {
+        return {zNear, zFar};
+    }
 
 private:
     floating width, height;
