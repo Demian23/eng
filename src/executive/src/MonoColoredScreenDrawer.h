@@ -7,7 +7,8 @@
 #include "../../matrix/src/Viewport.h"
 #include "RGBArray.h"
 #include "RGBArrayInserter.h"
-
+#include <format>
+#include <ostream>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/fl_draw.H>
@@ -85,6 +86,16 @@ public:
         fl_draw_image(screenArray.data(), 0, 0, w(), h(), 3);
     }
 
+    void printOutStatistic(std::ostream& stream)
+    {
+        auto [cameraX, cameraY, cameraZ] = static_cast<std::array<eng::floating, 3>>(camera.getEye());
+        auto [targetX, targetY, targetZ] = static_cast<std::array<eng::floating, 3>>(camera.getTarget());
+        auto [diagonal, azimuth, polar] = static_cast<std::array<eng::floating, 3>>(eng::vec::cartesianToSpherical(camera.getEye()));
+        stream << "Camera: " << cameraX << ' ' << cameraY << ' ' << cameraZ << '\n'
+            << "Target: " << targetX << ' ' << targetY << ' ' << targetZ << '\n'
+            << "Camera (diagonal azimuth polar): " << diagonal << ' ' << eng::radianToDegree(azimuth) << ' ' << eng::radianToDegree(polar) << '\n';
+    }
+
     enum HandledEvents {
         ChangeFocusToCamera = 'c',
         ChangeFocusToTarget = 't',
@@ -101,6 +112,7 @@ public:
         MoveY = 'u',
         MoveZ = 'f',
         PerspectiveAngle = 'e',
+        Statistic = 'i',
     };
 
     enum class Focused { Camera, Target };
@@ -242,6 +254,9 @@ public:
                     break;
                 }
                 return Fl_Window::handle(event);
+            case Statistic:
+                printOutStatistic(std::cout);
+                return 1;
             default:
                 return Fl_Window::handle(event);
             }

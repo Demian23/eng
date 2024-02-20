@@ -8,8 +8,8 @@ namespace eng::ent {
 Camera::Camera(vec::ThreeDimensionalVector cameraEye,
                vec::ThreeDimensionalVector cameraTarget,
                vec::ThreeDimensionalVector cameraUp) noexcept
-    : eye{vec::cartesianToHomogeneous(cameraEye, 0)},
-      target{vec::cartesianToHomogeneous(cameraTarget, 0)},
+    : eye{vec::cartesianToHomogeneous(vec::sphericalToCartesian(cameraEye), 0)},
+      target{vec::cartesianToHomogeneous(cameraTarget, 1)},
       up{vec::cartesianToHomogeneous(cameraUp, 0)}
 {}
 
@@ -61,5 +61,6 @@ void Camera::moveTarget(vec::ThreeDimensionalVector position) noexcept
 {
     target = mtr::Move{position} * target;
 }
+
 
 } // namespace eng::ent

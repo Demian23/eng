@@ -33,8 +33,8 @@ ThreeDimensionalVector sphericalToCartesian(
     const ThreeDimensionalVector &vectorInSphericalNotation) noexcept
 {
     auto radialLine = vectorInSphericalNotation[0],
-         polarAngleInRad = vectorInSphericalNotation[1],
-         azimuthalAngleInRad = vectorInSphericalNotation[2];
+         polarAngleInRad = vectorInSphericalNotation[1], // O
+         azimuthalAngleInRad = vectorInSphericalNotation[2]; // phi
     return {
         radialLine * std::sin(polarAngleInRad) * std::cos(azimuthalAngleInRad),
         radialLine * std::sin(polarAngleInRad) * std::sin(azimuthalAngleInRad),

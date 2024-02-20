@@ -28,6 +28,9 @@ public:
         return eye.length();
     }
 
+    [[nodiscard]] inline const vec::ThreeDimensionalVector getEye()const noexcept{return vec::homogeneousToCartesian(eye);}
+    [[nodiscard]] inline vec::ThreeDimensionalVector getTarget()const noexcept{return vec::homogeneousToCartesian(target);}
+
 private:
     vec::FourDimensionalVector eye;
     vec::FourDimensionalVector target;

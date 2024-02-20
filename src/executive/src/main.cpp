@@ -31,7 +31,7 @@ int main(int argc, const char *argv[])
                 eng::degreeToRadian(std::stof(argv[4]))};
             eng::vec::ThreeDimensionalVector target{};
             eng::floating zNear = 0.1f, zFar = 1000;
-            if (argc == 8) {
+            if (argc >= 8) {
                 target = {std::stof(argv[5]), std::stof(argv[6]),
                           std::stof(argv[7])};
             }
