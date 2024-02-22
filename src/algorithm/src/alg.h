@@ -9,11 +9,11 @@ namespace eng::alg {
 template <typename OutIterator>
 void line(numeric x0, numeric x1, numeric y0, numeric y1, OutIterator &&out)
 {
-    auto deltaX = std::abs(x1 - x0);
-    auto deltaY = std::abs(y1 - y0);
+    int64_t deltaX = std::abs(x1 - x0);
+    int64_t deltaY = std::abs(y1 - y0);
     auto signX = (x0 < x1) ? 1 : -1;
     auto signY = (y0 < y1) ? 1 : -1;
-    auto error = deltaX - deltaY;
+    int64_t error = deltaX - deltaY;
     for (auto x = x0, y = y0;;) {
         *out = {x, y};
         ++out;

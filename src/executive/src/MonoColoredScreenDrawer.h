@@ -48,7 +48,7 @@ public:
             if (projection == eng::ent::ProjectionType::Perspective) {
                 transform(vertex.begin(), vertex.end(), vertex.begin(),
                           [w = *vertex.rbegin()](auto &&coord) {
-                              return w != 0 ? coord /= w : coord;
+                              return w > 1 ? coord /= w : 0;
                           });
             }
             return vertex;

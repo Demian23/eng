@@ -22,6 +22,9 @@ public:
           modelMatrix(mtr::Matrix::createIdentityMatrix())
     {}
 
+    void addModelTransformation(mtr::Matrix transformation)noexcept{
+        modelMatrix = transformation * modelMatrix;
+    }
     [[nodiscard]] inline mtr::Matrix getModelMatrix() const noexcept
     {
         return modelMatrix;
