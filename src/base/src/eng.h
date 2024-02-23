@@ -13,7 +13,7 @@ inline floating degreeToRadian(floating degree)
 }
 inline floating radianToDegree(floating radian)
 {
-    return radian *  180 / std::numbers::pi_v<floating>;
+    return radian * 180 / std::numbers::pi_v<floating>;
 }
 
 } // namespace eng

@@ -62,5 +62,4 @@ void Camera::moveTarget(vec::ThreeDimensionalVector position) noexcept
     target = mtr::Move{position} * target;
 }
 
-
 } // namespace eng::ent

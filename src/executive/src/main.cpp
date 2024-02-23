@@ -11,9 +11,10 @@
 int initExecutiveAndRun(std::string_view pathToObjFile,
                         eng::vec::ThreeDimensionalVector cameraEye,
                         eng::vec::ThreeDimensionalVector target,
-                        std::pair<eng::floating, eng::floating> z, eng::mtr::Matrix modelTransformation);
+                        std::pair<eng::floating, eng::floating> z,
+                        eng::mtr::Matrix modelTransformation);
 
-eng::mtr::Matrix getModelTransformationFromUserString(const char*argv[]);
+eng::mtr::Matrix getModelTransformationFromUserString(const char *argv[]);
 
 void exceptionHandler();
 
@@ -27,14 +28,17 @@ int main(int argc, const char *argv[])
             std::cerr << "usage: " << argv[0]
                       << " <path-to-obj-file> < camera position: "
                          "<radialLine> <polarAngle> <azimuthalAngle> > [target "
-                         "position: <x> <y> <z>] [zNear zFar] [model_transformations]\nModel transformation example: s 0.1 x 30 y 10 z 0 m 1,1,1\n";
+                         "position: <x> <y> <z>] [zNear zFar] "
+                         "[model_transformations]\nModel transformation "
+                         "example: s 0.1 x 30 y 10 z 0 m 1,1,1\n";
         } else {
             eng::vec::ThreeDimensionalVector cameraEye{
                 std::stof(argv[2]), eng::degreeToRadian(std::stof(argv[3])),
                 eng::degreeToRadian(std::stof(argv[4]))};
             eng::vec::ThreeDimensionalVector target{};
             eng::floating zNear = 0.1f, zFar = 1000;
-            eng::mtr::Matrix modelTransformation = eng::mtr::Matrix::createIdentityMatrix();
+            eng::mtr::Matrix modelTransformation =
+                eng::mtr::Matrix::createIdentityMatrix();
             if (argc >= 8) {
                 target = {std::stof(argv[5]), std::stof(argv[6]),
                           std::stof(argv[7])};
@@ -43,8 +47,9 @@ int main(int argc, const char *argv[])
                 zNear = std::stof(argv[8]);
                 zFar = std::stof(argv[9]);
             }
-            if(argc > 10){
-                modelTransformation = getModelTransformationFromUserString(argv + 10);
+            if (argc > 10) {
+                modelTransformation =
+                    getModelTransformationFromUserString(argv + 10);
             }
             return initExecutiveAndRun(argv[1], cameraEye, target,
                                        {zNear, zFar}, modelTransformation);
@@ -138,33 +143,38 @@ void exceptionHandler()
     }
 }
 
-eng::mtr::Matrix getModelTransformationFromUserString(const char*argv[])
+eng::mtr::Matrix getModelTransformationFromUserString(const char *argv[])
 {
-    enum transformations{scale = 's', rotateX = 'x', rotateY = 'y', rotateZ = 'z', move = 'm'};
+    enum transformations {
+        scale = 's',
+        rotateX = 'x',
+        rotateY = 'y',
+        rotateZ = 'z',
+    };
     eng::mtr::Matrix result = eng::mtr::Matrix::createIdentityMatrix();
-    for(;*argv != nullptr; ++argv){
+    for (; *argv != nullptr; ++argv) {
         switch (**argv) {
-        case scale:{
+        case scale: {
             auto scaleValue = std::stof(*(++argv));
-            result = eng::mtr::Scale{{scaleValue, scaleValue, scaleValue}} * result;
+            result =
+                eng::mtr::Scale{{scaleValue, scaleValue, scaleValue}} * result;
             break;
         }
-        case rotateX:{
+        case rotateX: {
             auto degree = std::stof(*(++argv));
             result = eng::mtr::RotateX{degree} * result;
             break;
         }
-        case rotateY:{
+        case rotateY: {
             auto degree = std::stof(*(++argv));
             result = eng::mtr::RotateY{degree} * result;
             break;
         }
-        case rotateZ:{
+        case rotateZ: {
             auto degree = std::stof(*(++argv));
             result = eng::mtr::RotateZ{degree} * result;
             break;
         }
-        case move:
         default:
             break;
         }

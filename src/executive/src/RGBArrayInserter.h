@@ -13,7 +13,7 @@ public:
     using reference = void;
     using _Container = RGBArray;
 
-    RGBArrayInserter(RGBArray &arr, RGB inserted, uint64_t xSize)
+    RGBArrayInserter(RGBArray &arr, RGB inserted, uint32_t xSize)
         : arr_(arr), pixel_(inserted), xSize_(xSize)
     {}
     constexpr inline RGBArrayInserter &operator++() { return *this; }
@@ -29,5 +29,5 @@ public:
 private:
     _Container &arr_;
     RGB pixel_;
-    uint64_t xSize_;
+    uint32_t xSize_;
 };
