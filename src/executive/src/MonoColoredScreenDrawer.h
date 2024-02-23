@@ -48,7 +48,10 @@ public:
             if (projection == eng::ent::ProjectionType::Perspective) {
                 transform(vertex.begin(), vertex.end() - 1, vertex.begin(),
                           [w = *vertex.rbegin()](auto &&coord) {
-                              return coord /= w;
+                              // if you brave enough, you can erase branch here
+                              // and leave coord /= w, but zero division is
+                              // undefined behaviour, remember
+                              return w > 0 ? coord /= w : coord;
                           });
             }
 
