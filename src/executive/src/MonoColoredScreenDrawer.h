@@ -42,13 +42,13 @@ public:
             cameraProjection.getProjectionMatrix(projectionType) *
             camera.getViewMatrix() * model.getModelMatrix();
         auto transformVertex = [transformationMatrix,
-                                projection =
-                                    this->projectionType, xMax, yMax](auto &&vertex) {
+                                projection = this->projectionType, xMax,
+                                yMax](auto &&vertex) {
             vertex = transformationMatrix * vertex;
             if (projection == eng::ent::ProjectionType::Perspective) {
                 transform(vertex.begin(), vertex.end() - 1, vertex.begin(),
                           [w = *vertex.rbegin()](auto &&coord) {
-                              return w > 0 ? coord /= w : coord;
+                              return coord /= w;
                           });
             }
 
@@ -69,8 +69,9 @@ public:
 
     static bool isPolygonViewable(const PolygonType &polygon) noexcept
     {
-        return !std::any_of(polygon.begin(), polygon.end(),
-                           [](auto &&vertex) { return *vertex.rbegin() <= 0; });
+        return !std::any_of(polygon.begin(), polygon.end(), [](auto &&vertex) {
+            return *vertex.rbegin() <= 0;
+        });
     }
 
     void draw() override
@@ -81,20 +82,18 @@ public:
             RGBArrayInserter inserter{screenArray, color,
                                       static_cast<uint32_t>(this->w())};
             for (const auto &polygon : copy) {
-                if (isPolygonViewable(polygon)) {
-                    eng::alg::line(
-                        static_cast<eng::numeric>(polygon[0][0]),
-                        static_cast<eng::numeric>((*polygon.rbegin())[0]),
-                        static_cast<eng::numeric>(polygon[0][1]),
-                        static_cast<eng::numeric>((*polygon.rbegin())[1]),
-                        inserter);
-                    for (unsigned i = 1; i < polygon.size(); i++) {
-                        eng::alg::line(
-                            static_cast<eng::numeric>(polygon[i - 1][0]),
-                            static_cast<eng::numeric>(polygon[i][0]),
-                            static_cast<eng::numeric>(polygon[i - 1][1]),
-                            static_cast<eng::numeric>(polygon[i][1]), inserter);
-                    }
+                eng::alg::line(
+                    static_cast<eng::numeric>(polygon[0][0]),
+                    static_cast<eng::numeric>((*polygon.rbegin())[0]),
+                    static_cast<eng::numeric>(polygon[0][1]),
+                    static_cast<eng::numeric>((*polygon.rbegin())[1]),
+                    inserter);
+                for (unsigned i = 1; i < polygon.size(); i++) {
+                    eng::alg::line(static_cast<eng::numeric>(polygon[i - 1][0]),
+                                   static_cast<eng::numeric>(polygon[i][0]),
+                                   static_cast<eng::numeric>(polygon[i - 1][1]),
+                                   static_cast<eng::numeric>(polygon[i][1]),
+                                   inserter);
                 }
             }
         }
