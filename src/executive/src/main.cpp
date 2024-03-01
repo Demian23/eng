@@ -60,14 +60,35 @@ int main(int argc, const char *argv[])
     return 1;
 }
 
-template <typename PolygonType>
-std::vector<PolygonType> getPolygons(std::istream &objStream)
+struct Dimensions{eng::floating xMin, xMax, yMin, yMax, zMin, zMax;};
+
+using vertexConsIter = std::vector<eng::Vertex>::const_iterator;
+
+Dimensions findVerticesDimensions(vertexConsIter begin, vertexConsIter end)
 {
-    std::vector<eng::Vertex> vertices;
-    std::vector<PolygonType> polygons;
-    eng::obj::parseOnlyVerticesAndPolygons(objStream, vertices, polygons);
-    return polygons;
+    Dimensions dimensions{};
+    auto vertexWithMinimalX = std::min_element(begin, end,
+                                               [](auto&& firstVertex, auto&& secondVertex){return *firstVertex.begin() < *secondVertex.begin();});
+    dimensions.xMin = (*vertexWithMinimalX)[0];
+    auto vertexWithMinimalY = std::min_element(begin, end,
+                                               [](auto&& firstVertex, auto&& secondVertex){return *(firstVertex.begin() + 1) < *(secondVertex.begin() + 1);});
+    dimensions.yMin = (*vertexWithMinimalY)[1];
+    auto vertexWithMinimalZ = std::min_element(begin, end,
+                                               [](auto&& firstVertex, auto&& secondVertex){return *(firstVertex.begin() + 2) < *(secondVertex.begin() + 2);});
+    dimensions.zMin = (*vertexWithMinimalZ)[2];
+
+    auto vertexWithMaximalX = std::max_element(begin, end,
+                                               [](auto&& firstVertex, auto&& secondVertex){return *firstVertex.begin() < *secondVertex.begin();});
+    dimensions.xMax = (*vertexWithMaximalX)[0];
+    auto vertexWithMaximalY = std::max_element(begin, end,
+                                               [](auto&& firstVertex, auto&& secondVertex){return *(firstVertex.begin() + 1) < *(secondVertex.begin() + 1);});
+    dimensions.yMax = (*vertexWithMaximalY)[1];
+    auto vertexWithMaximalZ = std::max_element(begin, end,
+                                               [](auto&& firstVertex, auto&& secondVertex){return *(firstVertex.begin() + 2) < *(secondVertex.begin() + 2);});
+    dimensions.zMax = (*vertexWithMaximalZ)[2];
+    return dimensions;
 }
+
 
 int initExecutiveAndRun(std::string_view pathToObjFile,
                         eng::vec::ThreeDimensionalVector cameraEye,
@@ -102,33 +123,27 @@ int initExecutiveAndRun(std::string_view pathToObjFile,
                                 static_cast<floating>(h), z.first, z.second,
                                 90};
 
+    auto createDrawerAndRun = [=, &objFile]<PolygonType T>(std::vector<T> polygons){
+      std::vector<eng::Vertex> vertices;
+      eng::obj::parseOnlyVerticesAndPolygons(objFile, vertices, polygons);
+      auto dimensions = findVerticesDimensions(vertices.begin(), vertices.end());
+      eng::ent::Model model{std::move(polygons)};
+      model.addModelTransformation(modelTransformation);
+
+      MonoColoredScreenDrawer drawer(w, h - 20, std::move(model), camera,
+                                     projection);
+      drawer.end();
+      drawer.show();
+      return Fl::run();
+    };
+
     switch (numberOfVertices) {
-    case 3: {
-        eng::ent::Model model{getPolygons<TriangleVertexOnly>(objFile)};
-        model.addModelTransformation(modelTransformation);
-        MonoColoredScreenDrawer drawer(w, h - 20, std::move(model), camera,
-                                       projection);
-        drawer.end();
-        drawer.show();
-        return Fl::run();
-    }
-    case 4: {
-        eng::ent::Model model{getPolygons<QuadVertexOnly>(objFile)};
-        model.addModelTransformation(modelTransformation);
-        MonoColoredScreenDrawer drawer(w, h - 20, std::move(model), camera,
-                                       projection);
-        drawer.end();
-        drawer.show();
-        return Fl::run();
-    }
+    case 3:
+        return createDrawerAndRun(std::vector<TriangleVertexOnly>());
+    case 4:
+        return createDrawerAndRun(std::vector<QuadVertexOnly>());
     default:
-        eng::ent::Model model{getPolygons<PolygonVertexOnly>(objFile)};
-        model.addModelTransformation(modelTransformation);
-        MonoColoredScreenDrawer drawer(w, h - 20, std::move(model), camera,
-                                       projection);
-        drawer.end();
-        drawer.show();
-        return Fl::run();
+        return createDrawerAndRun(std::vector<PolygonVertexOnly>());
     }
 }
 

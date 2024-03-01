@@ -13,8 +13,7 @@ concept PolygonType =
     std::is_same_v<T, PolygonVertexOnly> ||
     std::is_same_v<T, TriangleVertexOnly> || std::is_same_v<T, QuadVertexOnly>;
 
-template <typename T>
-    requires PolygonType<T>
+template <PolygonType T>
 class Model {
 public:
     Model(std::vector<T> outerPolygons)
