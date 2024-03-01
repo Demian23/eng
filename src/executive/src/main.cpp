@@ -1,5 +1,6 @@
 #include "../../objparser/src/ObjParser.h"
 #include "MonoColoredScreenDrawer.h"
+#include <cxxopts.hpp>
 #include <FL/Fl.H>
 #include <exception>
 #include <filesystem>
@@ -23,40 +24,48 @@ int main(int argc, const char *argv[])
     std::cout.exceptions(std::iostream::badbit | std::iostream::failbit);
     std::cerr.exceptions(std::iostream::badbit | std::iostream::failbit);
 
-    try {
-        if (argc != 5 && argc != 8 && (argc < 10)) {
-            std::cerr << "usage: " << argv[0]
-                      << " <path-to-obj-file> < camera position: "
-                         "<radialLine> <polarAngle> <azimuthalAngle> > [target "
-                         "position: <x> <y> <z>] [zNear zFar] "
-                         "[model_transformations]\nModel transformation "
-                         "example: s 0.1 x 30 y 10 z 0 m 1,1,1\n";
-        } else {
-            eng::vec::ThreeDimensionalVector cameraEye{
-                std::stof(argv[2]), eng::degreeToRadian(std::stof(argv[3])),
-                eng::degreeToRadian(std::stof(argv[4]))};
-            eng::vec::ThreeDimensionalVector target{};
-            eng::floating zNear = 0.1f, zFar = 1000;
-            eng::mtr::Matrix modelTransformation =
-                eng::mtr::Matrix::createIdentityMatrix();
-            if (argc >= 8) {
-                target = {std::stof(argv[5]), std::stof(argv[6]),
-                          std::stof(argv[7])};
-            }
-            if (argc >= 10) {
-                zNear = std::stof(argv[8]);
-                zFar = std::stof(argv[9]);
-            }
-            if (argc > 10) {
-                modelTransformation =
-                    getModelTransformationFromUserString(argv + 10);
-            }
-            return initExecutiveAndRun(argv[1], cameraEye, target,
-                                       {zNear, zFar}, modelTransformation);
+    cxxopts::Options options("Executive", "Executive system, illustrating eng library work");
+
+    // ?
+    options.add_options()
+        ("h,help", "Print usage")
+        ("a,auto-positioning", "Auto positioning of model")
+        ("source", ".obj with model", cxxopts::value<std::string>())
+        ("c,camera", "Camera position vector in polar coordinates", cxxopts::value<std::vector<eng::floating>>()->default_value("3,0,0"))
+        ("t,target", "Target position vector", cxxopts::value<std::vector<eng::floating>>()->default_value("0,0,0"))
+        ("scale", "Scale model in all directions on one coefficient", cxxopts::value<eng::floating>())
+    ;
+    options.parse_positional({"source"});
+
+    try{
+        auto result = options.parse(argc, argv);
+        if(result.count("help")){
+            std::cout << options.help() << std::endl;
+            return 0;
         }
+        std::string source{};
+        if(result.count("source")){
+            source = result["source"].as<std::string>();
+        }else{
+            std::cerr << "No obj file!\n";
+            return 1;
+        }
+        auto camera = result["camera"].as<std::vector<eng::floating>>();
+        auto target = result["target"].as<std::vector<eng::floating>>();
+        eng::vec::ThreeDimensionalVector cameraEye {camera.at(0), eng::degreeToRadian(camera.at(1)), eng::degreeToRadian(camera.at(2))},
+            targetPosition{target.at(0), target.at(1), target.at(2)};
+        eng::mtr::Matrix modelTransformation =
+            eng::mtr::Matrix::createIdentityMatrix();
+        if(result.count("scale")){
+            auto scaleCoefficient = result["scale"].as<eng::floating>();
+            modelTransformation = modelTransformation * eng::mtr::Scale{{scaleCoefficient, scaleCoefficient, scaleCoefficient}};
+        }
+        return initExecutiveAndRun(source, cameraEye, targetPosition,
+                                   {0.0f, 100.0f}, modelTransformation);
     } catch (...) {
         exceptionHandler();
     }
+
     return 1;
 }
 
@@ -151,6 +160,8 @@ void exceptionHandler()
 {
     try {
         throw;
+    } catch (const cxxopts::exceptions::exception& ex){
+        std::cerr << ex.what() << '\n';
     } catch (const std::exception &e) {
         std::cerr << e.what() << '\n';
     } catch (...) {
