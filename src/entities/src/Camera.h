@@ -7,11 +7,16 @@ namespace eng::ent {
 
 class Camera final {
 public:
+    Camera() noexcept = default;
     Camera(vec::ThreeDimensionalVector cameraEye,
            vec::ThreeDimensionalVector cameraTarget,
            vec::ThreeDimensionalVector cameraUp) noexcept;
 
     [[nodiscard]] mtr::Matrix getViewMatrix() const noexcept;
+
+    void reset(vec::ThreeDimensionalVector cameraEye,
+               vec::ThreeDimensionalVector cameraTarget,
+               vec::ThreeDimensionalVector cameraUp)noexcept;
 
     void rotateX(floating degree) noexcept;
     void rotateY(floating degree) noexcept;

@@ -26,7 +26,7 @@ Normal strToNormal(std::string_view stringRep);
 std::vector<PolygonIndexes>
 strToPolygonIndexesVector(std::string_view stringRep);
 
-uint32_t checkPolygonSize(std::istream &stream);
+uint32_t getPolygonSize(std::istream &stream);
 
 std::vector<numeric> strToVerticesIndexes(std::string_view stringRep);
 

@@ -10,14 +10,20 @@
 #include <stdexcept>
 
 int initExecutiveAndRun(std::string_view pathToObjFile,
-                        eng::vec::ThreeDimensionalVector cameraEye,
-                        eng::vec::ThreeDimensionalVector target,
-                        std::pair<eng::floating, eng::floating> z,
-                        eng::mtr::Matrix modelTransformation);
-
-eng::mtr::Matrix getModelTransformationFromUserString(const char *argv[]);
+                        eng::ent::Camera camera,
+                        eng::mtr::Matrix modelTransformation, bool isAutoPositioning);
 
 void exceptionHandler();
+struct Dimensions{eng::floating xMin, xMax, yMin, yMax, zMin, zMax;};
+using vertexConsIter = std::vector<eng::Vertex>::const_iterator;
+Dimensions findModelDimensions(vertexConsIter begin, vertexConsIter end);
+uint32_t openObjFileAndGetNumberOfVerticesInPolygon(std::string_view pathToObjFile, std::ifstream& objFile);
+
+
+void autoPositioningForModel(Dimensions dimensions, eng::ent::Camera& camera,
+                             eng::ent::CameraProjection& projection,
+                             eng::mtr::Matrix& modelTransformation);
+
 
 int main(int argc, const char *argv[])
 {
@@ -26,10 +32,9 @@ int main(int argc, const char *argv[])
 
     cxxopts::Options options("Executive", "Executive system, illustrating eng library work");
 
-    // ?
     options.add_options()
         ("h,help", "Print usage")
-        ("a,auto-positioning", "Auto positioning of model")
+        ("a,auto-positioning", "Auto positioning of model", cxxopts::value<bool>()->default_value("false"))
         ("source", ".obj with model", cxxopts::value<std::string>())
         ("c,camera", "Camera position vector in polar coordinates", cxxopts::value<std::vector<eng::floating>>()->default_value("3,0,0"))
         ("t,target", "Target position vector", cxxopts::value<std::vector<eng::floating>>()->default_value("0,0,0"))
@@ -50,18 +55,27 @@ int main(int argc, const char *argv[])
             std::cerr << "No obj file!\n";
             return 1;
         }
-        auto camera = result["camera"].as<std::vector<eng::floating>>();
-        auto target = result["target"].as<std::vector<eng::floating>>();
-        eng::vec::ThreeDimensionalVector cameraEye {camera.at(0), eng::degreeToRadian(camera.at(1)), eng::degreeToRadian(camera.at(2))},
-            targetPosition{target.at(0), target.at(1), target.at(2)};
+
+        eng::ent::Camera camera{};
+
         eng::mtr::Matrix modelTransformation =
             eng::mtr::Matrix::createIdentityMatrix();
-        if(result.count("scale")){
-            auto scaleCoefficient = result["scale"].as<eng::floating>();
-            modelTransformation = modelTransformation * eng::mtr::Scale{{scaleCoefficient, scaleCoefficient, scaleCoefficient}};
+
+        // TODO: get vectors here and then make auto-positioning
+        // and pass model, camera and projection to drawer
+
+        if(!result["auto-positioning"].as<bool>()){
+            auto cameraVec = result["camera"].as<std::vector<eng::floating>>();
+            auto target = result["target"].as<std::vector<eng::floating>>();
+            eng::vec::ThreeDimensionalVector cameraEye {cameraVec.at(0), eng::degreeToRadian(cameraVec.at(1)), eng::degreeToRadian(cameraVec.at(2))},
+                targetPosition{target.at(0), target.at(1), target.at(2)};
+            if(result.count("scale")){
+                auto scaleCoefficient = result["scale"].as<eng::floating>();
+                modelTransformation = modelTransformation * eng::mtr::Scale{{scaleCoefficient, scaleCoefficient, scaleCoefficient}};
+            }
         }
-        return initExecutiveAndRun(source, cameraEye, targetPosition,
-                                   {0.0f, 100.0f}, modelTransformation);
+
+        return initExecutiveAndRun(source, camera, modelTransformation, result["auto-positioning"].as<bool>());
     } catch (...) {
         exceptionHandler();
     }
@@ -69,76 +83,29 @@ int main(int argc, const char *argv[])
     return 1;
 }
 
-struct Dimensions{eng::floating xMin, xMax, yMin, yMax, zMin, zMax;};
-
-using vertexConsIter = std::vector<eng::Vertex>::const_iterator;
-
-Dimensions findVerticesDimensions(vertexConsIter begin, vertexConsIter end)
-{
-    Dimensions dimensions{};
-    auto vertexWithMinimalX = std::min_element(begin, end,
-                                               [](auto&& firstVertex, auto&& secondVertex){return *firstVertex.begin() < *secondVertex.begin();});
-    dimensions.xMin = (*vertexWithMinimalX)[0];
-    auto vertexWithMinimalY = std::min_element(begin, end,
-                                               [](auto&& firstVertex, auto&& secondVertex){return *(firstVertex.begin() + 1) < *(secondVertex.begin() + 1);});
-    dimensions.yMin = (*vertexWithMinimalY)[1];
-    auto vertexWithMinimalZ = std::min_element(begin, end,
-                                               [](auto&& firstVertex, auto&& secondVertex){return *(firstVertex.begin() + 2) < *(secondVertex.begin() + 2);});
-    dimensions.zMin = (*vertexWithMinimalZ)[2];
-
-    auto vertexWithMaximalX = std::max_element(begin, end,
-                                               [](auto&& firstVertex, auto&& secondVertex){return *firstVertex.begin() < *secondVertex.begin();});
-    dimensions.xMax = (*vertexWithMaximalX)[0];
-    auto vertexWithMaximalY = std::max_element(begin, end,
-                                               [](auto&& firstVertex, auto&& secondVertex){return *(firstVertex.begin() + 1) < *(secondVertex.begin() + 1);});
-    dimensions.yMax = (*vertexWithMaximalY)[1];
-    auto vertexWithMaximalZ = std::max_element(begin, end,
-                                               [](auto&& firstVertex, auto&& secondVertex){return *(firstVertex.begin() + 2) < *(secondVertex.begin() + 2);});
-    dimensions.zMax = (*vertexWithMaximalZ)[2];
-    return dimensions;
-}
-
 
 int initExecutiveAndRun(std::string_view pathToObjFile,
-                        eng::vec::ThreeDimensionalVector cameraEye,
-                        eng::vec::ThreeDimensionalVector target,
-                        std::pair<eng::floating, eng::floating> z,
-                        eng::mtr::Matrix modelTransformation)
+                        eng::ent::Camera camera,
+                        eng::mtr::Matrix modelTransformation, bool isAutoPositioning)
+
 {
-    using namespace eng;
-    using namespace eng::obj;
-    using namespace eng::vec;
-    using namespace eng::ent;
+    std::ifstream objFile{};
+    auto numberOfVerticesInPolygon = openObjFileAndGetNumberOfVerticesInPolygon(pathToObjFile, objFile);
 
-    if (!std::filesystem::is_regular_file(pathToObjFile)) {
-        throw std::logic_error(std::string(pathToObjFile) +
-                               " is not regular file");
-    }
-
-    std::ifstream objFile(pathToObjFile);
-    if (objFile.bad()) {
-        throw std::logic_error{"Can't open " + std::string(pathToObjFile) +
-                               " for read"};
-    }
-
-    uint32_t numberOfVertices = checkPolygonSize(objFile);
-    objFile.seekg(0);
-    int x, y, w, h;
-    Fl::screen_xywh(x, y, w, h);
-
-    ThreeDimensionalVector defaultUp{0, 1, 0};
-    Camera camera{cameraEye, target, defaultUp};
-    CameraProjection projection{static_cast<floating>(w),
-                                static_cast<floating>(h), z.first, z.second,
-                                90};
-
-    auto createDrawerAndRun = [=, &objFile]<PolygonType T>(std::vector<T> polygons){
+    auto createDrawerAndRun = [=, &objFile]<eng::ent::PolygonType T>(std::vector<T> polygons)mutable{
       std::vector<eng::Vertex> vertices;
+
       eng::obj::parseOnlyVerticesAndPolygons(objFile, vertices, polygons);
-      auto dimensions = findVerticesDimensions(vertices.begin(), vertices.end());
+      int x, y, w, h;
+      Fl::screen_xywh(x, y, w, h);
+      eng::ent::CameraProjection projection{static_cast<eng::floating>(w), static_cast<eng::floating>(h), 0, 100, 90};
+
+      if(isAutoPositioning){
+          autoPositioningForModel(findModelDimensions(vertices.begin(), vertices.end()), camera, projection, modelTransformation);
+      }
+
       eng::ent::Model model{std::move(polygons)};
       model.addModelTransformation(modelTransformation);
-
       MonoColoredScreenDrawer drawer(w, h - 20, std::move(model), camera,
                                      projection);
       drawer.end();
@@ -146,13 +113,13 @@ int initExecutiveAndRun(std::string_view pathToObjFile,
       return Fl::run();
     };
 
-    switch (numberOfVertices) {
+    switch (numberOfVerticesInPolygon) {
     case 3:
-        return createDrawerAndRun(std::vector<TriangleVertexOnly>());
+        return createDrawerAndRun(std::vector<eng::TriangleVertexOnly>{});
     case 4:
-        return createDrawerAndRun(std::vector<QuadVertexOnly>());
+        return createDrawerAndRun(std::vector<eng::QuadVertexOnly>{});
     default:
-        return createDrawerAndRun(std::vector<PolygonVertexOnly>());
+        return createDrawerAndRun(std::vector<eng::PolygonVertexOnly>{});
     }
 }
 
@@ -168,42 +135,53 @@ void exceptionHandler()
         std::cerr << "Unknown exception threw\n";
     }
 }
-
-eng::mtr::Matrix getModelTransformationFromUserString(const char *argv[])
+uint32_t openObjFileAndGetNumberOfVerticesInPolygon(std::string_view pathToObjFile, std::ifstream& objFile)
 {
-    enum transformations {
-        scale = 's',
-        rotateX = 'x',
-        rotateY = 'y',
-        rotateZ = 'z',
-    };
-    eng::mtr::Matrix result = eng::mtr::Matrix::createIdentityMatrix();
-    for (; *argv != nullptr; ++argv) {
-        switch (**argv) {
-        case scale: {
-            auto scaleValue = std::stof(*(++argv));
-            result =
-                eng::mtr::Scale{{scaleValue, scaleValue, scaleValue}} * result;
-            break;
-        }
-        case rotateX: {
-            auto degree = std::stof(*(++argv));
-            result = eng::mtr::RotateX{degree} * result;
-            break;
-        }
-        case rotateY: {
-            auto degree = std::stof(*(++argv));
-            result = eng::mtr::RotateY{degree} * result;
-            break;
-        }
-        case rotateZ: {
-            auto degree = std::stof(*(++argv));
-            result = eng::mtr::RotateZ{degree} * result;
-            break;
-        }
-        default:
-            break;
-        }
+    if (!std::filesystem::is_regular_file(pathToObjFile)) {
+        throw std::logic_error(std::string(pathToObjFile) +
+                               " is not regular file");
     }
+
+    objFile.open(pathToObjFile);
+    if (objFile.bad()) {
+        throw std::logic_error{"Can't open " + std::string(pathToObjFile) +
+                               " for read"};
+    }
+
+    auto result = eng::obj::getPolygonSize(objFile);
+    objFile.seekg(0);
     return result;
+}
+
+Dimensions findModelDimensions(vertexConsIter begin, vertexConsIter end)
+{
+    Dimensions dimensions{};
+    auto comparatorGenerator = [](int addition){
+      return [addition](auto&& firstVertex, auto&& secondVertex){return *(firstVertex.begin() + addition) < *(secondVertex.begin() + addition);};
+    };
+    auto compareX = comparatorGenerator(0);
+    auto compareY = comparatorGenerator(1);
+    auto compareZ = comparatorGenerator(2);
+
+    dimensions.xMin = (*std::min_element(begin, end, compareX))[0];
+    dimensions.yMin = (*std::min_element(begin, end, compareY))[1];
+    dimensions.zMin = (*std::min_element(begin, end, compareZ))[2];
+    dimensions.xMax = (*std::max_element(begin, end, compareX))[0];
+    dimensions.yMax = (*std::max_element(begin, end, compareY))[1];
+    dimensions.zMax = (*std::max_element(begin, end, compareZ))[2];
+
+    return dimensions;
+}
+
+void autoPositioningForModel(Dimensions dimensions, eng::ent::Camera& camera,
+                             eng::ent::CameraProjection& projection,
+                             eng::mtr::Matrix& modelTransformation)
+{
+    auto modelWidth = dimensions.xMax - dimensions.xMin;
+    auto modelHeight= dimensions.yMax - dimensions.yMin;
+    auto modelThickness = dimensions.zMax - dimensions.zMin;
+
+    //modelTransformation = modelTransformation * eng::mtr::Move{{modelWidth / 2 , modelHeight / 2, modelThickness / 2}};
+    projection.setZComponent(dimensions.zMin, dimensions.zMax + 1);
+    camera.reset({3, 0, 0}, {0, 0, 0}, {0, 1, 0});
 }

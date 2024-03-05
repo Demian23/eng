@@ -6,7 +6,7 @@
 
 namespace eng::obj {
 
-uint32_t checkPolygonSize(std::istream &stream)
+uint32_t getPolygonSize(std::istream &stream)
 {
     for (std::string line{}; stream.good() && std::getline(stream, line);) {
         if (line.ends_with('\r'))

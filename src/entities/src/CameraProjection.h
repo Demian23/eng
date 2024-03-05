@@ -9,10 +9,16 @@ enum class ProjectionType { Orthographic, Perspective };
 
 class CameraProjection {
 public:
+    CameraProjection() noexcept = default;
     CameraProjection(floating w, floating h, floating zMin, floating zMax,
                      floating projectionAngle) noexcept
         : width{w}, height{h}, zNear{zMin}, zFar{zMax}, angle{projectionAngle}
     {}
+
+    inline void reset(floating w, floating h, floating zMin, floating zMax,
+               floating projectionAngle) noexcept{width = w; height = h; zNear = zMin; zFar = zMax; angle = projectionAngle;}
+
+    inline void setZComponent(floating zMin, floating zMax) noexcept{zNear = zMin; zFar = zMax;}
 
     [[nodiscard]] inline floating getAngleInDegrees() const noexcept
     {

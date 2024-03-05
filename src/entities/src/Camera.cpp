@@ -13,6 +13,15 @@ Camera::Camera(vec::ThreeDimensionalVector cameraEye,
       up{vec::cartesianToHomogeneous(cameraUp, 0)}
 {}
 
+void Camera::reset(vec::ThreeDimensionalVector cameraEye,
+           vec::ThreeDimensionalVector cameraTarget,
+           vec::ThreeDimensionalVector cameraUp)noexcept
+{
+    eye = {vec::cartesianToHomogeneous(vec::sphericalToCartesian(cameraEye), 0)};
+    target = {vec::cartesianToHomogeneous(cameraTarget, 1)};
+    up = {vec::cartesianToHomogeneous(cameraUp, 0)};
+}
+
 mtr::Matrix Camera::getViewMatrix() const noexcept
 {
     return mtr::View{eye, target, up};
