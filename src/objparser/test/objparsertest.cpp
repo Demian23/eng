@@ -4,6 +4,7 @@
 #include <vector>
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "../src/ObjParser.h"
+#include "engConfig.h"
 #include <doctest/doctest.h>
 
 using namespace eng::obj;
@@ -57,7 +58,7 @@ TEST_CASE("Parse stream")
 TEST_CASE("Parse file")
 {
     // TODO from config file
-    std::ifstream file("/Users/egor/work/objfiles/FinalBaseMesh.obj");
+    std::ifstream file(parseFileTest_source);
     REQUIRE(file.good());
 
     std::vector<Vertex> vertices;

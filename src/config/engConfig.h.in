@@ -1,0 +1,5 @@
+#ifndef ENG_CONFIG_H_IN_H
+#define ENG_CONFIG_H_IN_H
+constexpr char parseFileTest_source[] = "$ENV{OBJPARSETEST_PARSEFILETEST_SOURCE}";
+constexpr unsigned long long timeTestForLines_sampleSize = $ENV{ALGTEST_TIMETESTFORLINES_SAMPLESIZE};
+#endif // ENG_CONFIG_H_IN_H

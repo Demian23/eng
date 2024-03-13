@@ -1,5 +1,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "../src/alg.h"
+#include "engConfig.h"
 #include <algorithm>
 #include <chrono>
 #include <doctest/doctest.h>
@@ -84,7 +85,7 @@ TEST_CASE("Time test for Bresenham's line, improvedLine and ddaLine")
         std::pair<double, double> x1y1;
     };
 
-    constexpr int sampleSize = 10000;
+    constexpr auto sampleSize = timeTestForLines_sampleSize;
 
     std::vector<DDALine> ddaLineInput{sampleSize};
     std::generate(ddaLineInput.begin(), ddaLineInput.end(), [=]() mutable {

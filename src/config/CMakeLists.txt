@@ -1,2 +1,3 @@
 add_library(config INTERFACE)
-target_include_directories(config INTERFACE ${CMAKE_SOURCE_DIR}/src/config)
+configure_file(engConfig.h.in engConfig.h)
+target_include_directories(config INTERFACE ${CMAKE_CURRENT_BINARY_DIR})

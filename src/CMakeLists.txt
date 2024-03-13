@@ -1,4 +1,5 @@
 enable_testing()
+add_subdirectory(config)
 add_subdirectory(base)
 add_subdirectory(vector)
 add_subdirectory(algorithm)
