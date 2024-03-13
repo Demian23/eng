@@ -10,13 +10,12 @@ namespace eng::ent {
 
 template <typename T>
 concept PolygonType =
-std::is_same_v<T, PolygonVertexOnly> ||
-std::is_same_v<T, TriangleVertexOnly> || std::is_same_v<T, QuadVertexOnly>;
+    std::is_same_v<T, PolygonVertexOnly> ||
+    std::is_same_v<T, TriangleVertexOnly> || std::is_same_v<T, QuadVertexOnly>;
 
-template <PolygonType T>
-class Model {
+template <PolygonType T> class Model {
 public:
-    Model(std::vector<T> outerPolygons)
+    explicit Model(std::vector<T> outerPolygons)
         : polygons{std::move(outerPolygons)},
           modelMatrix(mtr::Matrix::createIdentityMatrix())
     {}

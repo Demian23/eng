@@ -16,7 +16,7 @@ public:
 
     void reset(vec::ThreeDimensionalVector cameraEye,
                vec::ThreeDimensionalVector cameraTarget,
-               vec::ThreeDimensionalVector cameraUp)noexcept;
+               vec::ThreeDimensionalVector cameraUp) noexcept;
 
     void rotateX(floating degree) noexcept;
     void rotateY(floating degree) noexcept;

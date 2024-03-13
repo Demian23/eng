@@ -13,10 +13,11 @@ uint32_t getPolygonSize(std::istream &stream)
             line.pop_back();
         auto delimiterPosition = line.find(objectTypeDelimiter);
         std::string_view element{line.data(), delimiterPosition};
-        std::string_view strRep{line.data() + delimiterPosition + 1,
-                                line.size() - delimiterPosition - 1};
         if (strToType(element) == Object::Polygon) {
-            return static_cast<uint32_t>(strToVerticesIndexes(strRep).size());
+            return static_cast<uint32_t>(
+                strToVerticesIndexes({line.data() + delimiterPosition + 1,
+                                      line.size() - delimiterPosition - 1})
+                    .size());
         }
     }
     return 0;
@@ -75,9 +76,13 @@ std::vector<numeric> strToVerticesIndexes(std::string_view stringRep)
     std::vector<numeric> indexesVector;
     char *lastPos = const_cast<char *>(stringRep.data());
     long vertexIndex{};
+    auto strStart = stringRep.data();
+    auto strSize = stringRep.size();
     while ((vertexIndex = std::strtol(lastPos, &lastPos, 10)) != 0) {
         if (*lastPos == '/') {
-            while (*(lastPos++) != ' ')
+            while ((static_cast<decltype(strSize)>(lastPos - strStart) <
+                    strSize) &&
+                   *(lastPos++) != ' ')
                 ;
         }
         indexesVector.emplace_back(vertexIndex);

@@ -11,7 +11,7 @@ struct RGB {
 
 class RGBArray final {
 public:
-    RGBArray(std::size_t size) : rgbArrayRep{size} {}
+    explicit RGBArray(std::size_t size) : rgbArrayRep{size} {}
 
     inline void fill(RGB value)
     {

@@ -14,10 +14,11 @@ Camera::Camera(vec::ThreeDimensionalVector cameraEye,
 {}
 
 void Camera::reset(vec::ThreeDimensionalVector cameraEye,
-           vec::ThreeDimensionalVector cameraTarget,
-           vec::ThreeDimensionalVector cameraUp)noexcept
+                   vec::ThreeDimensionalVector cameraTarget,
+                   vec::ThreeDimensionalVector cameraUp) noexcept
 {
-    eye = {vec::cartesianToHomogeneous(vec::sphericalToCartesian(cameraEye), 0)};
+    eye = {
+        vec::cartesianToHomogeneous(vec::sphericalToCartesian(cameraEye), 0)};
     target = {vec::cartesianToHomogeneous(cameraTarget, 1)};
     up = {vec::cartesianToHomogeneous(cameraUp, 0)};
 }

@@ -16,9 +16,20 @@ public:
     {}
 
     inline void reset(floating w, floating h, floating zMin, floating zMax,
-               floating projectionAngle) noexcept{width = w; height = h; zNear = zMin; zFar = zMax; angle = projectionAngle;}
+                      floating projectionAngle) noexcept
+    {
+        width = w;
+        height = h;
+        zNear = zMin;
+        zFar = zMax;
+        angle = projectionAngle;
+    }
 
-    inline void setZComponent(floating zMin, floating zMax) noexcept{zNear = zMin; zFar = zMax;}
+    inline void setZComponent(floating zMin, floating zMax) noexcept
+    {
+        zNear = zMin;
+        zFar = zMax;
+    }
 
     [[nodiscard]] inline floating getAngleInDegrees() const noexcept
     {
@@ -40,9 +51,9 @@ public:
     }
 
 private:
-    floating width, height;
-    floating zNear, zFar;
-    floating angle;
+    floating width{}, height{};
+    floating zNear{}, zFar{};
+    floating angle{};
 };
 
 } // namespace eng::ent

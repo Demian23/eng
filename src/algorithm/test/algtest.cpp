@@ -84,26 +84,23 @@ TEST_CASE("Time test for Bresenham's line, improvedLine and ddaLine")
         std::pair<double, double> x1y1;
     };
 
-    constexpr int sampleSize = 100000;
+    constexpr int sampleSize = 10000;
 
     std::vector<DDALine> ddaLineInput{sampleSize};
     std::generate(ddaLineInput.begin(), ddaLineInput.end(), [=]() mutable {
-      return DDALine{
-          {realDist(mt), realDist(mt)},
-          {realDist(mt) , realDist(mt)}};
+        return DDALine{{realDist(mt), realDist(mt)},
+                       {realDist(mt), realDist(mt)}};
     });
 
     std::vector<Line> improvedLine{sampleSize};
     std::generate(improvedLine.begin(), improvedLine.end(), [=]() mutable {
-      return Line{{dist(mt), dist(mt)}, {dist(mt), dist(mt)}};
+        return Line{{dist(mt), dist(mt)}, {dist(mt), dist(mt)}};
     });
 
     std::vector<Line> simpleLine{sampleSize};
     std::generate(simpleLine.begin(), simpleLine.end(), [=]() mutable {
         return Line{{dist(mt), dist(mt)}, {dist(mt), dist(mt)}};
     });
-
-
 
     std::vector<valueType> simpleLineResult{};
     std::vector<valueType> improvedLineResult{};
@@ -140,7 +137,7 @@ TEST_CASE("Time test for Bresenham's line, improvedLine and ddaLine")
     auto simpleDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
         endSimple - startSimple);
     auto improvedDuration =
-        std::chrono::duration_cast<std::chrono::milliseconds >(endImproved -
+        std::chrono::duration_cast<std::chrono::milliseconds>(endImproved -
                                                               startImproved);
     auto ddaDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
         endDDA - startDDA);

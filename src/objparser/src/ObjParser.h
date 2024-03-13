@@ -38,15 +38,15 @@ void parseOnlyVerticesAndPolygons(std::istream &stream,
             line.pop_back();
         auto delimiterPosition = line.find(objectTypeDelimiter);
         std::string_view element{line.data(), delimiterPosition};
-        std::string_view strRep{line.data() + delimiterPosition + 1,
-                                line.size() - delimiterPosition - 1};
 
         switch (strToType(element)) {
         case Object::Vertex:
-            vertexParser(strRep);
+            vertexParser({line.data() + delimiterPosition + 1,
+                          line.size() - delimiterPosition - 1});
             break;
         case Object::Polygon:
-            polygonParser(strRep);
+            polygonParser({line.data() + delimiterPosition + 1,
+                           line.size() - delimiterPosition - 1});
             break;
         default:
             break;
