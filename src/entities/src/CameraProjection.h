@@ -41,6 +41,18 @@ public:
         angle = newAngle;
     }
 
+    [[nodiscard]]
+    inline floating getAspect() const noexcept
+    {
+        return width / height;
+    }
+
+    [[nodiscard]]
+    inline floating getZMin() const noexcept
+    {
+        return zNear;
+    }
+
     [[nodiscard]] mtr::Matrix
     getProjectionMatrix(ProjectionType projectionType) const noexcept;
 

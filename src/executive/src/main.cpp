@@ -213,18 +213,12 @@ void autoPositioningForModel(Dimensions dimensions, eng::ent::Camera &camera,
         std::sqrt(modelWidth * modelWidth + modelHeight * modelHeight +
                   modelThickness * modelThickness);
     eng::floating radiusForSphere = diagonalForCircumscribedParallelepiped / 2;
-    eng::floating projectionAngle = projection.getAngleInDegrees();
-    eng::floating angleForFarPartOfDistance =
-        eng::degreeToRadian(projectionAngle / 2);
-    eng::floating angleForNearPartOfDistance =
-        eng::degreeToRadian(90 - projectionAngle / 2);
 
-    // not accurate distance
+    eng::floating fovDivided = eng::degreeToRadian(projection.getAngleInDegrees() / 2);
+    eng::floating horizontalFovDivided = std::atan(projection.getAspect() * std::tan(fovDivided));
+
+    eng::floating distanceForCamera = std::max({radiusForSphere / std::sin(std::min(fovDivided, horizontalFovDivided)), projection.getZMin() + radiusForSphere});
+
     // TODO: ask how fix this
-    eng::floating distanceForCamera =
-        std::tan(angleForNearPartOfDistance) *
-            std::sin(angleForFarPartOfDistance) * radiusForSphere +
-        std::cos(angleForFarPartOfDistance) * radiusForSphere;
-
     camera.reset({distanceForCamera, 0, 0}, {0, 0, 0}, {0, 1, 0});
 }
