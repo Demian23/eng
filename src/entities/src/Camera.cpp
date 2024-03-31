@@ -5,17 +5,15 @@
 
 namespace eng::ent {
 
-Camera::Camera(vec::ThreeDimensionalVector cameraEye,
-               vec::ThreeDimensionalVector cameraTarget,
-               vec::ThreeDimensionalVector cameraUp) noexcept
+Camera::Camera(vec::Vec3F cameraEye, vec::Vec3F cameraTarget,
+               vec::Vec3F cameraUp) noexcept
     : eye{vec::cartesianToHomogeneous(vec::sphericalToCartesian(cameraEye), 0)},
       target{vec::cartesianToHomogeneous(cameraTarget, 1)},
       up{vec::cartesianToHomogeneous(cameraUp, 0)}
 {}
 
-void Camera::reset(vec::ThreeDimensionalVector cameraEye,
-                   vec::ThreeDimensionalVector cameraTarget,
-                   vec::ThreeDimensionalVector cameraUp) noexcept
+void Camera::reset(vec::Vec3F cameraEye, vec::Vec3F cameraTarget,
+                   vec::Vec3F cameraUp) noexcept
 {
     eye = {
         vec::cartesianToHomogeneous(vec::sphericalToCartesian(cameraEye), 0)};
@@ -67,7 +65,7 @@ void Camera::changeAzimuthalAngle(floating addition) noexcept
     changeEyeAsSphericalVector(2, degreeToRadian(addition));
 }
 
-void Camera::moveTarget(vec::ThreeDimensionalVector position) noexcept
+void Camera::moveTarget(vec::Vec3F position) noexcept
 {
     target = mtr::Move{position} * target;
 }

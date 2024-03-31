@@ -8,15 +8,13 @@ namespace eng::ent {
 class Camera final {
 public:
     Camera() noexcept = default;
-    Camera(vec::ThreeDimensionalVector cameraEye,
-           vec::ThreeDimensionalVector cameraTarget,
-           vec::ThreeDimensionalVector cameraUp) noexcept;
+    Camera(vec::Vec3F cameraEye, vec::Vec3F cameraTarget,
+           vec::Vec3F cameraUp) noexcept;
 
     [[nodiscard]] mtr::Matrix getViewMatrix() const noexcept;
 
-    void reset(vec::ThreeDimensionalVector cameraEye,
-               vec::ThreeDimensionalVector cameraTarget,
-               vec::ThreeDimensionalVector cameraUp) noexcept;
+    void reset(vec::Vec3F cameraEye, vec::Vec3F cameraTarget,
+               vec::Vec3F cameraUp) noexcept;
 
     void rotateX(floating degree) noexcept;
     void rotateY(floating degree) noexcept;
@@ -26,27 +24,26 @@ public:
     void changePolarAngle(floating addition) noexcept;
     void changeAzimuthalAngle(floating addition) noexcept;
 
-    void moveTarget(vec::ThreeDimensionalVector position) noexcept;
+    void moveTarget(vec::Vec3F position) noexcept;
 
     [[nodiscard]] inline eng::floating getDiagonalLength() const noexcept
     {
         return eye.length();
     }
 
-    [[nodiscard]] inline const vec::ThreeDimensionalVector
-    getEye() const noexcept
+    [[nodiscard]] inline const vec::Vec3F getEye() const noexcept
     {
         return vec::homogeneousToCartesian(eye);
     }
-    [[nodiscard]] inline vec::ThreeDimensionalVector getTarget() const noexcept
+    [[nodiscard]] inline vec::Vec3F getTarget() const noexcept
     {
         return vec::homogeneousToCartesian(target);
     }
 
 private:
-    vec::FourDimensionalVector eye;
-    vec::FourDimensionalVector target;
-    vec::FourDimensionalVector up;
+    vec::Vec4F eye;
+    vec::Vec4F target;
+    vec::Vec4F up;
 
     void changeEyeAsSphericalVector(unsigned index, floating addition) noexcept;
 };

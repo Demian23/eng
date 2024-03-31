@@ -2,13 +2,15 @@
 
 #include "../../base/src/eng.h"
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <concepts>
 
 namespace eng::alg {
 
 // Bresenham's line
 template <typename OutIterator>
-void line(numeric x0, numeric x1, numeric y0, numeric y1, OutIterator &&out)
+void line(integral x0, integral x1, integral y0, integral y1, OutIterator &&out)
 {
     int64_t deltaX = std::abs(x1 - x0);
     int64_t deltaY = std::abs(y1 - y0);
@@ -33,7 +35,7 @@ void line(numeric x0, numeric x1, numeric y0, numeric y1, OutIterator &&out)
 }
 
 template <typename OutIterator>
-void improvedBresenhamLine(numeric x0, numeric x1, numeric y0, numeric y1,
+void improvedBresenhamLine(integral x0, integral x1, integral y0, integral y1,
                            OutIterator &&out)
 {
     auto lineWidth = std::abs(x1 - x0);
@@ -52,7 +54,7 @@ void improvedBresenhamLine(numeric x0, numeric x1, numeric y0, numeric y1,
     int64_t errorDec = 2 * incrementSideOfLineRectangle;
     int64_t errorInc = 2 * std::min(lineWidth, lineHeight);
 
-    for (numeric x = 0, y = 0; x <= incrementSideOfLineRectangle; x++) {
+    for (integral x = 0, y = 0; x <= incrementSideOfLineRectangle; x++) {
         auto xt = x0 + m11 * x + m12 * y;
         auto yt = y0 + m21 * x + m22 * y;
         *out = {xt, yt};
@@ -69,10 +71,10 @@ template <typename OutIterator>
 void ddaLine(floating x0, floating x1, floating y0, floating y1,
              OutIterator &&out)
 {
-    auto xStart = static_cast<numeric>(std::round(x0));
-    auto xEnd = static_cast<numeric>(std::round(x1));
-    auto yStart = static_cast<numeric>(std::round(y0));
-    auto yEnd = static_cast<numeric>(std::round(y1));
+    auto xStart = static_cast<integral>(std::round(x0));
+    auto xEnd = static_cast<integral>(std::round(x1));
+    auto yStart = static_cast<integral>(std::round(y0));
+    auto yEnd = static_cast<integral>(std::round(y1));
     auto width = xEnd - xStart;
     auto height = yEnd - yStart;
     auto incrementSideOfLineRectangle =
@@ -82,14 +84,34 @@ void ddaLine(floating x0, floating x1, floating y0, floating y1,
                  static_cast<floating>(incrementSideOfLineRectangle);
     auto yStep = static_cast<floating>(height) /
                  static_cast<floating>(incrementSideOfLineRectangle);
-    for (numeric i = 0; i <= incrementSideOfLineRectangle; i++) {
+    for (integral i = 0; i <= incrementSideOfLineRectangle; i++) {
         // get this values from out iterator?
-        *out = {static_cast<numeric>(std::round(x)),
-                static_cast<numeric>(std::round(y))};
+        *out = {static_cast<integral>(std::round(x)),
+                static_cast<integral>(std::round(y))};
         // accuracy?
         x += xStep;
         y += yStep;
     }
+}
+
+template <typename Iter, size_t dimensions,
+          typename Coord = std::iterator_traits<Iter>::value_type::value_type>
+std::array<Coord, dimensions * 2> boundingBox(Iter begin, Iter end)
+{
+    std::array<Coord, dimensions * 2> result{};
+    auto comparatorGenerator = [](unsigned addition) {
+        return [addition](auto &&firstVertex, auto &&secondVertex) {
+            return *(firstVertex.begin() + addition) <
+                   *(secondVertex.begin() + addition);
+        };
+    };
+    for (unsigned i = 0; i < dimensions; i++) {
+        auto compareIComponent = comparatorGenerator(i);
+        result[i * 2] = (*std::min_element(begin, end, compareIComponent))[i];
+        result[i * 2 + 1] =
+            (*std::max_element(begin, end, compareIComponent))[i];
+    }
+    return result;
 }
 
 } // namespace eng::alg

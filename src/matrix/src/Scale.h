@@ -5,7 +5,7 @@ namespace eng::mtr {
 
 class Scale final : public Matrix {
 public:
-    explicit Scale(ThreeDimensionalVector scaleVector)
+    explicit Scale(Vec3F scaleVector)
     {
         for (unsigned i = 0; i < scaleVector.size(); i++) {
             matrix_[i][i] = scaleVector[i];

@@ -2,10 +2,9 @@
 
 namespace eng::mtr {
 
-FourDimensionalVector
-Matrix::operator*(FourDimensionalVector vector) const noexcept
+Vec4F Matrix::operator*(Vec4F vector) const noexcept
 {
-    FourDimensionalVector result;
+    Vec4F result;
     auto resultIter = result.begin();
     for (const auto &row : matrix_) {
         floating sum{};

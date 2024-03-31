@@ -14,7 +14,7 @@ TEST_CASE("Matrix instantiation") { REQUIRE_NOTHROW(Matrix matrixInstance); }
 
 TEST_CASE("Vector multiplication with identity matrix")
 {
-    FourDimensionalVector vector{3.0f, 1.2f, 4.5f, 1.0f};
+    Vec4F vector{3.0f, 1.2f, 4.5f, 1.0f};
     auto result = Matrix::createIdentityMatrix() * vector;
     REQUIRE_EQ(vector, result);
 }
@@ -36,7 +36,7 @@ TEST_CASE("Matrix multiplication with matrix")
 
 TEST_CASE("Vector multiplication with Scale")
 {
-    FourDimensionalVector vector{3, 2, 1, 1}, expected{1.5, 4, 1, 1};
+    Vec4F vector{3, 2, 1, 1}, expected{1.5, 4, 1, 1};
     Scale scaleMatrix{{0.5, 2, 1}};
     auto result = scaleMatrix * vector;
 
@@ -45,7 +45,7 @@ TEST_CASE("Vector multiplication with Scale")
 
 TEST_CASE("Vector multiplication with Move")
 {
-    FourDimensionalVector vector{3, 2, 1, 1}, expected{8, 7, -1, 1};
+    Vec4F vector{3, 2, 1, 1}, expected{8, 7, -1, 1};
     Move moveMatrix{{5, 5, -2}};
     auto result = moveMatrix * vector;
 

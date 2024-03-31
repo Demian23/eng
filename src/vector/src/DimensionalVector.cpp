@@ -1,25 +1,23 @@
 #include "DimensionalVector.h"
 namespace eng::vec {
 
-FourDimensionalVector
-vectorMultiplicationForHomogeneous(const FourDimensionalVector &a,
-                                   const FourDimensionalVector &b) noexcept
+Vec4F vectorMultiplicationForHomogeneous(const Vec4F &a,
+                                         const Vec4F &b) noexcept
 {
-    FourDimensionalVector result;
+    Vec4F result;
     result[0] = a[1] * b[2] - a[2] * b[1];
     result[1] = a[2] * b[0] - a[0] * b[2];
     result[2] = a[0] * b[1] - a[1] * b[0];
     result[3] = 0;
     return result;
 }
-FourDimensionalVector cartesianToHomogeneous(const ThreeDimensionalVector &a,
-                                             floating w = 1) noexcept
+
+Vec4F cartesianToHomogeneous(const Vec3F &a, floating w = 1) noexcept
 {
     return {a[0], a[1], a[2], w};
 }
 
-ThreeDimensionalVector
-homogeneousToCartesian(const FourDimensionalVector &a) noexcept
+Vec3F homogeneousToCartesian(const Vec4F &a) noexcept
 {
     auto w = a[3];
     if (w == 0) {
@@ -29,8 +27,7 @@ homogeneousToCartesian(const FourDimensionalVector &a) noexcept
     }
 }
 
-ThreeDimensionalVector sphericalToCartesian(
-    const ThreeDimensionalVector &vectorInSphericalNotation) noexcept
+Vec3F sphericalToCartesian(const Vec3F &vectorInSphericalNotation) noexcept
 {
     auto radialLine = vectorInSphericalNotation[0],
          polarAngleInRad = vectorInSphericalNotation[1],    // O
@@ -41,10 +38,9 @@ ThreeDimensionalVector sphericalToCartesian(
         radialLine * std::cos(polarAngleInRad)};
 }
 
-ThreeDimensionalVector
-cartesianToSpherical(const ThreeDimensionalVector &cartesianVector) noexcept
+Vec3F cartesianToSpherical(const Vec3F &cartesianVector) noexcept
 {
-    ThreeDimensionalVector result{};
+    Vec3F result{};
     auto vectorLen = cartesianVector.length();
     result[0] = vectorLen;
     result[1] = std::acos(cartesianVector[2] / vectorLen);

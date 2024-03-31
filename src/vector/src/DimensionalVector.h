@@ -6,8 +6,11 @@
 
 namespace eng::vec {
 
-template <size_t dimensions>
-class DimensionalVector : public std::array<floating, dimensions> {
+template <typename T>
+concept numeric = std::is_integral_v<T> || std::is_floating_point_v<T>;
+
+template <size_t dimensions, numeric Component>
+class DimensionalVector : public std::array<Component, dimensions> {
 public:
     [[nodiscard]] floating length() const noexcept
     {
@@ -17,7 +20,7 @@ public:
                 return res + curr * curr;
             }));
     }
-    DimensionalVector<dimensions> &normalize()
+    DimensionalVector<dimensions, Component> &normalize()
     {
         floating len = length();
         std::transform(this->begin(), this->end(), this->begin(),
@@ -25,8 +28,8 @@ public:
         return *this;
     }
 
-    DimensionalVector<dimensions> &
-    operator-=(const DimensionalVector<dimensions> &b)
+    DimensionalVector<dimensions, Component> &
+    operator-=(const DimensionalVector<dimensions, Component> &b)
     {
         auto &a = *this;
         for (unsigned i = 0; i < dimensions; i++)
@@ -34,8 +37,8 @@ public:
         return a;
     }
 
-    DimensionalVector<dimensions> &
-    operator+=(const DimensionalVector<dimensions> &b)
+    DimensionalVector<dimensions, Component> &
+    operator+=(const DimensionalVector<dimensions, Component> &b)
     {
         auto &a = *this;
         for (unsigned i = 0; i < dimensions; i++)
@@ -43,7 +46,7 @@ public:
         return a;
     }
 
-    DimensionalVector<dimensions> &operator/=(floating value)
+    DimensionalVector<dimensions, Component> &operator/=(floating value)
     {
         auto &a = *this;
         for (unsigned i = 0; i < dimensions; i++)
@@ -52,53 +55,73 @@ public:
     }
 };
 
-template <size_t dimensions>
-floating operator*(const DimensionalVector<dimensions> &a,
-                   const DimensionalVector<dimensions> &b)
+template <size_t dimensions, numeric Component>
+floating operator*(const DimensionalVector<dimensions, Component> &a,
+                   const DimensionalVector<dimensions, Component> &b)
 {
     return std::inner_product(a.begin(), a.end(), b.begin(),
                               static_cast<floating>(0));
 }
 
-template <size_t dimensions>
-DimensionalVector<dimensions> operator-(const DimensionalVector<dimensions> &a,
-                                        const DimensionalVector<dimensions> &b)
+template <size_t dimensions, numeric Component>
+DimensionalVector<dimensions, Component>
+operator-(const DimensionalVector<dimensions, Component> &a,
+          const DimensionalVector<dimensions, Component> &b)
 {
     auto z = a;
     return z -= b;
 }
 
-template <size_t dimensions>
-DimensionalVector<dimensions> operator+(const DimensionalVector<dimensions> &a,
-                                        const DimensionalVector<dimensions> &b)
+template <size_t dimensions, numeric Component>
+DimensionalVector<dimensions, Component>
+operator+(const DimensionalVector<dimensions, Component> &a,
+          const DimensionalVector<dimensions, Component> &b)
 {
     auto z = a;
     return z *= b;
 }
 
-template <size_t dimensions>
-DimensionalVector<dimensions> normalize(DimensionalVector<dimensions> from)
+template <size_t dimensions, numeric Component>
+DimensionalVector<dimensions, Component>
+normalize(DimensionalVector<dimensions, Component> from)
 {
     return from.normalize();
 }
 
-using ThreeDimensionalVector = DimensionalVector<3>;
-using FourDimensionalVector = DimensionalVector<4>;
+template <size_t dimensions>
+using IntegralVector = DimensionalVector<dimensions, integral>;
 
-FourDimensionalVector
-vectorMultiplicationForHomogeneous(const FourDimensionalVector &a,
-                                   const FourDimensionalVector &b) noexcept;
+template <size_t dimensions>
+using FloatingVector = DimensionalVector<dimensions, floating>;
 
-FourDimensionalVector cartesianToHomogeneous(const ThreeDimensionalVector &a,
-                                             floating w) noexcept;
+using Vec2F = FloatingVector<2>;
+using Vec3F = FloatingVector<3>;
+using Vec4F = FloatingVector<4>;
 
-ThreeDimensionalVector
-homogeneousToCartesian(const FourDimensionalVector &a) noexcept;
+using Vec2I = IntegralVector<2>;
+template <numeric Component> using Vec2 = DimensionalVector<2, Component>;
 
-ThreeDimensionalVector sphericalToCartesian(
-    const ThreeDimensionalVector &vectorInSphericalNotation) noexcept;
+template <numeric Component> Vec2<Component> perp(Vec2<Component> a) noexcept
+{
+    a[0] = -std::exchange(a[1], a[0]);
+    return a;
+}
 
-ThreeDimensionalVector
-cartesianToSpherical(const ThreeDimensionalVector &cartesianVector) noexcept;
+template <numeric Component>
+Component perpDot(const Vec2<Component> &a, const Vec2<Component> &b) noexcept
+{
+    return a[0] * b[1] - a[1] * b[0];
+}
+
+Vec4F vectorMultiplicationForHomogeneous(const Vec4F &a,
+                                         const Vec4F &b) noexcept;
+
+Vec4F cartesianToHomogeneous(const Vec3F &a, floating w) noexcept;
+
+Vec3F homogeneousToCartesian(const Vec4F &a) noexcept;
+
+Vec3F sphericalToCartesian(const Vec3F &vectorInSphericalNotation) noexcept;
+
+Vec3F cartesianToSpherical(const Vec3F &cartesianVector) noexcept;
 
 } // namespace eng::vec

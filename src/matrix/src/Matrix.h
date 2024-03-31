@@ -5,8 +5,8 @@
 
 namespace eng::mtr {
 
-using eng::vec::FourDimensionalVector;
-using eng::vec::ThreeDimensionalVector;
+using eng::vec::Vec3F;
+using eng::vec::Vec4F;
 
 enum { MatrixDimension = 4 };
 
@@ -23,8 +23,7 @@ public:
     explicit Matrix(MatrixRepresentation sourceMatrix) : matrix_(sourceMatrix)
     {}
 
-    [[nodiscard]] FourDimensionalVector
-    operator*(FourDimensionalVector vector) const noexcept;
+    [[nodiscard]] Vec4F operator*(Vec4F vector) const noexcept;
 
     // TODO implement matrix multiplication
     [[nodiscard]] Matrix operator*(const Matrix &matrix) const noexcept;

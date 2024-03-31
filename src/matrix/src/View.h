@@ -7,8 +7,7 @@ namespace eng::mtr {
 class View final : public Matrix {
 public:
     // w skip cause?
-    View(FourDimensionalVector eye, FourDimensionalVector target,
-         FourDimensionalVector up)
+    View(Vec4F eye, Vec4F target, Vec4F up)
     {
         auto zAxis = (eye - target).normalize();
         auto xAxis =

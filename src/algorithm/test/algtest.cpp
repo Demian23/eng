@@ -2,6 +2,7 @@
 #include "../src/alg.h"
 #include "engConfig.h"
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <doctest/doctest.h>
 #include <iostream>
@@ -154,4 +155,14 @@ TEST_CASE("Time test for Bresenham's line, improvedLine and ddaLine")
               << '\n';
     std::cout << simpleDuration.count() << ' ' << improvedDuration.count()
               << ' ' << ddaDuration.count() << std::endl;
+}
+
+TEST_CASE("Find bounding box of n-spaces object")
+{
+    std::vector model{
+        std::array{0, 1, 3}, {-1, 2, 4}, {-5, 8, 10}, {120, 0, 3}};
+    using iterType = std::vector<std::array<int, 3>>::const_iterator;
+    auto actual = boundingBox<iterType, 3>(model.cbegin(), model.cend());
+    auto expected = std::array{-5, 120, 0, 8, 3, 10};
+    CHECK_EQ(expected, actual);
 }

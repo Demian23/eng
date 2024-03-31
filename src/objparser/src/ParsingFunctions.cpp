@@ -23,24 +23,25 @@ uint32_t getPolygonSize(std::istream &stream)
     return 0;
 }
 
-vec::ThreeDimensionalVector parseVector(std::string_view stringRep,
-                                        char **lastPos)
+template <size_t size>
+auto parseFloatString(std::string_view stringRep, char **lastPos)
 {
-    vec::ThreeDimensionalVector result{};
-    char *nextPos{};
-    result[0] = std::strtof(stringRep.data(), lastPos);
-    result[1] = std::strtof(*lastPos, &nextPos);
-    result[2] = std::strtof(nextPos, lastPos);
+    std::array<eng::floating, size> result{};
+    char *nextPos = const_cast<char *>(stringRep.data());
+    for (unsigned i = 0; i < size; i++) {
+        if (i % 2) {
+            result[i] = std::strtof(*lastPos, &nextPos);
+        } else {
+            result[i] = std::strtof(nextPos, lastPos);
+        }
+    }
     return result;
 }
 
 Vertex strToVertex(std::string_view stringRep)
 {
-    // auto [ptr, err] = std::from_chars(stringRep.data(), stringRep.data() +
-    // stringRep.size(), newVertex.x, 10);
-    //  TODO think about errors
-    char *lastPos{};
-    auto v = parseVector(stringRep, &lastPos);
+    char *lastPos = nullptr;
+    auto v = parseFloatString<3>(stringRep, &lastPos);
     Vertex newVertex{v[0], v[1], v[2], 1.0f};
     if (lastPos != stringRep.end())
         newVertex[3] = std::strtof(lastPos, nullptr);
@@ -50,7 +51,22 @@ Vertex strToVertex(std::string_view stringRep)
 Normal strToNormal(std::string_view stringRep)
 {
     char *p;
-    return parseVector(stringRep, &p);
+    auto v = parseFloatString<3>(stringRep, &p);
+    return {v[0], v[1], v[2]};
+}
+
+TextureCoord strToTextureCoord(std::string_view stringRep)
+{
+    TextureCoord result{};
+    char *lastPos = nullptr, *nextPos = const_cast<char *>(stringRep.data());
+    result[0] = std::strtof(nextPos, &lastPos);
+    if (lastPos != stringRep.end()) {
+        result[1] = std::strtof(lastPos, &nextPos);
+        if (nextPos != stringRep.end()) {
+            result[2] = std::strtof(nextPos, &lastPos);
+        }
+    }
+    return result;
 }
 
 std::vector<PolygonIndexes>
@@ -58,22 +74,25 @@ strToPolygonIndexesVector(std::string_view stringRep)
 {
     std::vector<PolygonIndexes> indexesVector;
     char *lastPos = const_cast<char *>(stringRep.data());
-    long vertexIndex{}, normalIndex{};
-    while ((vertexIndex = std::strtol(lastPos, &lastPos, 10)) != 0) {
+    long vertexIndex{}, normalIndex{}, textureCoordinatesIndex{};
+    while ((vertexIndex = std::strtoll(lastPos, &lastPos, 10)) != 0) {
         if (*lastPos == '/') {
             lastPos++;
-            while (*(lastPos++) != '/')
-                ;
-            normalIndex = std::strtol(lastPos, &lastPos, 10);
+            textureCoordinatesIndex = std::strtoll(lastPos, &lastPos, 10);
+            if (*lastPos == '/') {
+                lastPos++;
+                normalIndex = std::strtoll(lastPos, &lastPos, 10);
+            }
         }
-        indexesVector.emplace_back(vertexIndex, normalIndex);
+        indexesVector.emplace_back(vertexIndex, normalIndex,
+                                   textureCoordinatesIndex);
     }
     return indexesVector;
 }
 
-std::vector<numeric> strToVerticesIndexes(std::string_view stringRep)
+std::vector<integral> strToVerticesIndexes(std::string_view stringRep)
 {
-    std::vector<numeric> indexesVector;
+    std::vector<integral> indexesVector;
     char *lastPos = const_cast<char *>(stringRep.data());
     long vertexIndex{};
     auto strStart = stringRep.data();
@@ -89,5 +108,4 @@ std::vector<numeric> strToVerticesIndexes(std::string_view stringRep)
     }
     return indexesVector;
 }
-
 } // namespace eng::obj

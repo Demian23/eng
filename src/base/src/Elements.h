@@ -5,21 +5,23 @@
 
 namespace eng {
 
-using Vertex = vec::FourDimensionalVector;
-using Normal = vec::ThreeDimensionalVector;
+using Vertex = vec::Vec4F;
+using Normal = vec::Vec3F;
+using TextureCoord = vec::Vec3F;
+struct PolygonComponent {
+    Vertex *vertex{};
+    Normal *normal{};
+    TextureCoord *textureCoordinates{};
+};
 
 struct PolygonIndexes {
-    numeric vertexIndex;
-    numeric normalIndex;
+    integral vertexIndex;
+    integral normalIndex;
+    integral textureCoordinatesIndex;
 };
 
-struct PolygonComponent final {
-    Vertex vertex;
-    Normal normal;
-};
-
-struct Polygon final : std::vector<PolygonComponent> {
-    explicit Polygon(size_t size) : std::vector<PolygonComponent>(size) {}
-};
+using Polygon = std::vector<PolygonComponent>; // or pointer
+using Triangle = std::array<PolygonComponent, 3>;
+using Quad = std::array<PolygonComponent, 4>;
 
 } // namespace eng
