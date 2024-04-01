@@ -175,7 +175,8 @@ TEST_CASE("Polygon triangulation")
         std::vector<decltype(triangle)> triangles;
         polygonTriangulation(triangle.begin(), triangle.end(),
                              std::back_inserter(triangles));
-        std::vector<decltype(triangle)> expected {{std::pair{10, 10}, {20, 0}, {0, 0}}};
+        std::vector<decltype(triangle)> expected{
+            {std::pair{10, 10}, {20, 0}, {0, 0}}};
         CHECK(triangles.size() == 1);
         CHECK(expected == triangles);
     }

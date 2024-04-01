@@ -53,6 +53,13 @@ public:
             a[i] /= value;
         return a;
     }
+
+    template<size_t newSize>
+    constexpr DimensionalVector<newSize, Component> trim() const noexcept{
+        DimensionalVector<newSize, Component> result{};
+        std::copy_n(this->begin(), newSize, result.begin());
+        return result;
+    }
 };
 
 template <size_t dimensions, numeric Component>

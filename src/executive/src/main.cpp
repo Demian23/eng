@@ -1,5 +1,5 @@
 #include "../../objparser/src/ObjParser.h"
-#include "MonoColoredScreenDrawer.h"
+#include "ColoredDrawer.h"
 #include <FL/Fl.H>
 #include <cxxopts.hpp>
 #include <exception>
@@ -128,8 +128,7 @@ int initExecutiveAndRun(std::string_view pathToObjFile, eng::ent::Camera camera,
     eng::ent::Model model{std::move(vertices), std::move(triangles),
                           std::move(normals), std::move(textures)};
     model.addModelTransformation(modelTransformation);
-    MonoColoredScreenDrawer drawer{w, h - 20, std::move(model), camera,
-                                   projection};
+    ColoredDrawer drawer{w, h - 20, std::move(model), camera, projection};
     drawer.end();
     drawer.show();
     return Fl::run();
@@ -146,25 +145,6 @@ void exceptionHandler()
     } catch (...) {
         std::cerr << "Unknown exception threw\n";
     }
-}
-uint32_t
-openObjFileAndGetNumberOfVerticesInPolygon(std::string_view pathToObjFile,
-                                           std::ifstream &objFile)
-{
-    if (!std::filesystem::is_regular_file(pathToObjFile)) {
-        throw std::logic_error(std::string(pathToObjFile) +
-                               " is not regular file");
-    }
-
-    objFile.open(pathToObjFile);
-    if (objFile.bad()) {
-        throw std::logic_error{"Can't open " + std::string(pathToObjFile) +
-                               " for read"};
-    }
-
-    auto result = eng::obj::getPolygonSize(objFile);
-    objFile.seekg(0);
-    return result;
 }
 
 void autoPositioningForModel(std::array<eng::floating, 6> dimensions,
