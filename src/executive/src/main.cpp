@@ -65,9 +65,6 @@ int main(int argc, const char *argv[])
         eng::mtr::Matrix modelTransformation =
             eng::mtr::Matrix::createIdentityMatrix();
 
-        // TODO: get vectors here and then make auto-positioning
-        // and pass model, camera and projection to drawer
-        // if use auto-positioning and set some values you know what you doing?
         bool isAutoPositioning = result["auto-positioning"].as<bool>();
         if (!isAutoPositioning) {
             auto cameraVec = result["camera"].as<std::vector<eng::floating>>();
@@ -101,43 +98,41 @@ int initExecutiveAndRun(std::string_view pathToObjFile, eng::ent::Camera camera,
 
 {
     std::ifstream objFile{};
-    auto numberOfVerticesInPolygon =
-        openObjFileAndGetNumberOfVerticesInPolygon(pathToObjFile, objFile);
 
-    auto createDrawerAndRun = [=, &objFile]<eng::ent::PolygonType T>(
-                                  std::vector<T> polygons) mutable {
-        std::vector<eng::Vertex> vertices;
-
-        eng::obj::parseOnlyVerticesAndPolygons(objFile, vertices, polygons);
-        int x, y, w, h;
-        Fl::screen_xywh(x, y, w, h);
-        eng::ent::CameraProjection projection{static_cast<eng::floating>(w),
-                                              static_cast<eng::floating>(h), 0,
-                                              100, 90};
-
-        if (isAutoPositioning) {
-            autoPositioningForModel(eng::alg::boundingBox<vertexConstIter, 3>(
-                                        vertices.begin(), vertices.end()),
-                                    camera, projection, modelTransformation);
-        }
-
-        eng::ent::Model model{std::move(polygons)};
-        model.addModelTransformation(modelTransformation);
-        MonoColoredScreenDrawer drawer(w, h - 20, std::move(model), camera,
-                                       projection);
-        drawer.end();
-        drawer.show();
-        return Fl::run();
-    };
-
-    switch (numberOfVerticesInPolygon) {
-    case 3:
-        return createDrawerAndRun(std::vector<eng::TriangleVertexOnly>{});
-    case 4:
-        return createDrawerAndRun(std::vector<eng::QuadVertexOnly>{});
-    default:
-        return createDrawerAndRun(std::vector<eng::PolygonVertexOnly>{});
+    if (!std::filesystem::is_regular_file(pathToObjFile)) {
+        throw std::logic_error(std::string(pathToObjFile) +
+                               " is not regular file");
     }
+
+    objFile.open(pathToObjFile);
+    if (objFile.bad()) {
+        throw std::logic_error{"Can't open " + std::string(pathToObjFile) +
+                               " for read"};
+    }
+    std::vector<eng::Vertex> vertices;
+    std::vector<eng::Normal> normals;
+    std::vector<eng::TextureCoord> textures;
+    std::vector<eng::Triangle> triangles;
+
+    eng::obj::parseStream(objFile, vertices, normals, textures, triangles);
+    int x, y, w, h;
+    Fl::screen_xywh(x, y, w, h);
+    eng::ent::CameraProjection projection{static_cast<eng::floating>(w),
+                                          static_cast<eng::floating>(h), 0, 100,
+                                          90};
+    if (isAutoPositioning) {
+        autoPositioningForModel(eng::alg::boundingBox<vertexConstIter, 3>(
+                                    vertices.begin(), vertices.end()),
+                                camera, projection, modelTransformation);
+    }
+    eng::ent::Model model{std::move(vertices), std::move(triangles),
+                          std::move(normals), std::move(textures)};
+    model.addModelTransformation(modelTransformation);
+    MonoColoredScreenDrawer drawer{w, h - 20, std::move(model), camera,
+                                   projection};
+    drawer.end();
+    drawer.show();
+    return Fl::run();
 }
 
 void exceptionHandler()

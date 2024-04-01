@@ -8,10 +8,14 @@ namespace eng {
 using Vertex = vec::Vec4F;
 using Normal = vec::Vec3F;
 using TextureCoord = vec::Vec3F;
+// can't be used without corresponding to vertex, normal and so on collections
+// collection should allow indexed access
+
 struct PolygonComponent {
-    Vertex *vertex{};
-    Normal *normal{};
-    TextureCoord *textureCoordinates{};
+    constexpr static ssize_t invalidOffset = -1;
+    ssize_t vertexOffset{};
+    ssize_t normalOffset{};
+    ssize_t textureCoordinatesOffset{};
 };
 
 struct PolygonIndexes {

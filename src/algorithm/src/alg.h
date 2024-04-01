@@ -114,4 +114,23 @@ std::array<Coord, dimensions * 2> boundingBox(Iter begin, Iter end)
     return result;
 }
 
+template <typename VertexIter, typename Out>
+void polygonTriangulation(VertexIter begin, VertexIter end, Out out)
+{
+    auto lastVertex = *begin;
+    begin++;
+    auto commonVertex = *begin;
+    begin++;
+    auto firstVertex = *begin;
+    begin++;
+
+    while (begin != end) {
+        *out = {commonVertex, firstVertex, *begin};
+        ++out;
+        firstVertex = *begin;
+        ++begin;
+    }
+    *out = {commonVertex, firstVertex, lastVertex};
+}
+
 } // namespace eng::alg

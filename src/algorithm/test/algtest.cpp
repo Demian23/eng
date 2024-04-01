@@ -166,3 +166,45 @@ TEST_CASE("Find bounding box of n-spaces object")
     auto expected = std::array{-5, 120, 0, 8, 3, 10};
     CHECK_EQ(expected, actual);
 }
+
+TEST_CASE("Polygon triangulation")
+{
+    std::array triangle{std::pair{0, 0}, std::pair{10, 10}, std::pair{20, 0}};
+    SUBCASE("Triangle")
+    {
+        std::vector<decltype(triangle)> triangles;
+        polygonTriangulation(triangle.begin(), triangle.end(),
+                             std::back_inserter(triangles));
+        std::vector<decltype(triangle)> expected {{std::pair{10, 10}, {20, 0}, {0, 0}}};
+        CHECK(triangles.size() == 1);
+        CHECK(expected == triangles);
+    }
+    SUBCASE("Quad")
+    {
+        std::array quad{std::pair{0, 0}, std::pair{10, 10}, std::pair{15, 8},
+                        std::pair{20, 0}};
+        std::vector<decltype(triangle)> triangles;
+        std::vector<decltype(triangle)> expected{
+            {std::pair{10, 10}, {15, 8}, {20, 0}},
+            {std::pair{10, 10}, {20, 0}, {0, 0}}};
+        polygonTriangulation(quad.begin(), quad.end(),
+                             std::back_inserter(triangles));
+        CHECK(triangles.size() == 2);
+        CHECK(expected == triangles);
+    }
+    SUBCASE("Pentagon")
+    {
+        std::array pentagon{std::pair{0, 0}, std::pair{10, 10},
+                            std::pair{15, 8}, std::pair{18, 5},
+                            std::pair{20, 0}};
+        std::vector<decltype(triangle)> triangles;
+        std::vector<decltype(triangle)> expected{
+            {std::pair{10, 10}, {15, 8}, {18, 5}},
+            {std::pair{10, 10}, {18, 5}, {20, 0}},
+            {std::pair{10, 10}, {20, 0}, {0, 0}}};
+        polygonTriangulation(pentagon.begin(), pentagon.end(),
+                             std::back_inserter(triangles));
+        CHECK(triangles.size() == 3);
+        CHECK(expected == triangles);
+    }
+}

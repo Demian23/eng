@@ -4,7 +4,7 @@
 
 namespace eng {
 
-using integral = long;
+using integral = long long;
 using floating = float;
 
 inline floating degreeToRadian(floating degree)

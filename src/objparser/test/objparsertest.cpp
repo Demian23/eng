@@ -92,10 +92,12 @@ TEST_CASE("Parse stream completely")
     std::vector<TextureCoord> textures;
     std::vector<Triangle> polygons;
 
-    std::stringstream stream{"# comment\nv  -1.3143 15.0686 -1.6458\nvn  "
-                             "-0.6011 0.4519 0.6591\nvt 0.22 0.34\nf 1/1/1 -1/-1/-1 1/1/-1"};
+    std::stringstream stream{
+        "# comment\nv  -1.3143 15.0686 -1.6458\nvn  "
+        "-0.6011 0.4519 0.6591\nvt 0.22 0.34\nf 1/1/1 -1/-1/-1 1/1/-1"};
 
-    std::vector expectedVertices{vec::Vec4F{-1.3143f, 15.0686f, -1.6458f, 1.0f}};
+    std::vector expectedVertices{
+        vec::Vec4F{-1.3143f, 15.0686f, -1.6458f, 1.0f}};
     std::vector expectedNormals{vec::Vec3F{-0.6011f, 0.4519f, 0.6591f}};
     std::vector expectedTextures{vec::Vec3F{0.22f, 0.34f, 0.0f}};
 
@@ -105,11 +107,11 @@ TEST_CASE("Parse stream completely")
     REQUIRE(normals == expectedNormals);
     REQUIRE(textures == expectedTextures);
 
-    for(const auto& polygon: polygons){
-        for(const auto& component: polygon) {
-            REQUIRE(component.vertex == &vertices[0]);
-            REQUIRE(component.normal == &normals[0]);
-            REQUIRE(component.textureCoordinates == &textures[0]);
+    for (const auto &polygon : polygons) {
+        for (const auto &component : polygon) {
+            REQUIRE(component.vertexOffset == 0);
+            REQUIRE(component.normalOffset == 0);
+            REQUIRE(component.textureCoordinatesOffset == 0);
         }
     }
 }
@@ -141,7 +143,8 @@ TEST_CASE("Parse file")
     std::cout << vertices.size() * sizeof(Vertex) << ' '
               << polygons.size() * 4 * sizeof(PolygonComponent) << '\n'
               << "Duration(milliseconds): " << duration.count() << std::endl;
-    std::cout << "With values: " << polygons.size() * sizeof(TriangleVertexOnly) << '\n';
+    std::cout << "With values: " << polygons.size() * sizeof(TriangleVertexOnly)
+              << '\n';
 
     CHECK(polygons.begin()->size() == 4);
     CHECK(std::equal(polygons[0].begin(), polygons[0].end(),
@@ -156,13 +159,16 @@ TEST_CASE("Parse file completely")
     std::vector<Vertex> vertices;
     std::vector<Normal> normals;
     std::vector<TextureCoord> textures;
-    std::vector<Quad> polygons;
+    std::vector<Triangle> polygons;
 
     parseStream(file, vertices, normals, textures, polygons);
 
     CHECK(vertices.size() == 24461);
     CHECK(normals.size() == 24460);
     CHECK(textures.size() == 0);
-    CHECK(polygons.size() == 24459);
-    std::cout << "With pointers: "<< vertices.size() * sizeof(*vertices.begin()) + polygons.size() *  4 * sizeof(Vertex*) << '\n';
+    CHECK(polygons.size() == 2 * 24459);
+    std::cout << "With pointers: "
+              << vertices.size() * sizeof(*vertices.begin()) +
+                     polygons.size() * 4 * sizeof(Vertex *)
+              << '\n';
 }

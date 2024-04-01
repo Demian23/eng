@@ -8,67 +8,58 @@
 
 namespace eng::ent {
 
-template <typename T>
-concept PolygonType =
-    std::is_same_v<T, PolygonVertexOnly> ||
-    std::is_same_v<T, TriangleVertexOnly> || std::is_same_v<T, QuadVertexOnly>;
+/*
+ * Model is class representing one model object with all normals, color rules
+ * texture coordinates. Polygons always represented as triangles for
+ * rasterization polygons have refs to vertex must be way work with triangles
+ * only (then when reading polygon will be divided) and with original polygons
+ * (needs reconfigure) color mode is also optional as texture mode
+ */
 
-template <PolygonType T> class Model {
+class Model final {
 public:
-    explicit Model(std::vector<T> outerPolygons)
-        : polygons{std::move(outerPolygons)},
+    using polygonIteratorType = std::vector<Triangle>::const_iterator;
+    using vertexIteratorType = std::vector<Vertex>::const_iterator;
+
+    Model(std::vector<Vertex> &&vertices, std::vector<Triangle> &&polygons,
+          std::vector<Normal> &&normals = {},
+          std::vector<TextureCoord> &&textureCoords = {})
+        : _vertices(std::move(vertices)), _normals(std::move(normals)),
+          _textureCoords(std::move(textureCoords)), _triangles(polygons),
           modelMatrix(mtr::Matrix::createIdentityMatrix())
     {}
 
-    void addModelTransformation(mtr::Matrix transformation) noexcept
-    {
-        modelMatrix = transformation * modelMatrix;
-    }
-    [[nodiscard]] inline mtr::Matrix getModelMatrix() const noexcept
-    {
-        return modelMatrix;
-    }
+    void addModelTransformation(mtr::Matrix transformation) noexcept;
 
-    void rotateX(floating degree) noexcept
-    {
-        modelMatrix = mtr::RotateX{degree} * modelMatrix;
-    }
+    [[nodiscard]] mtr::Matrix getModelMatrix() const noexcept;
 
-    void rotateY(floating degree) noexcept
-    {
-        modelMatrix = mtr::RotateY{degree} * modelMatrix;
-    }
+    void rotateX(floating degree) noexcept;
 
-    void rotateZ(floating degree) noexcept
-    {
-        modelMatrix = mtr::RotateZ{degree} * modelMatrix;
-    }
+    void rotateY(floating degree) noexcept;
 
-    void scale(floating on) noexcept
-    {
-        modelMatrix = mtr::Scale{{on, on, on}} * modelMatrix;
-    }
+    void rotateZ(floating degree) noexcept;
 
-    void move(vec::ThreeDimensionalVector where) noexcept
-    {
-        modelMatrix = mtr::Move{where} * modelMatrix;
-    }
+    void scale(floating on) noexcept;
 
-    void clearModelMatrix() noexcept
-    {
-        modelMatrix = mtr::Matrix::createIdentityMatrix();
-    }
+    void move(vec::Vec3F where) noexcept;
 
-    auto getPolygonsBegin() const noexcept { return polygons.cbegin(); }
-    auto getPolygonsEnd() const noexcept { return polygons.cend(); }
+    void clearModelMatrix() noexcept;
 
-    [[nodiscard]] inline bool empty() const noexcept
-    {
-        return polygons.empty();
-    }
+    [[nodiscard]] polygonIteratorType trianglesBegin() const noexcept;
+
+    [[nodiscard]] polygonIteratorType trianglesEnd() const noexcept;
+
+    [[nodiscard]] vertexIteratorType verticesBegin() const noexcept;
+
+    [[nodiscard]] vertexIteratorType verticesEnd() const noexcept;
+
+    [[nodiscard]] bool empty() const noexcept;
 
 private:
-    std::vector<T> polygons;
+    std::vector<Vertex> _vertices;
+    std::vector<Normal> _normals;
+    std::vector<TextureCoord> _textureCoords;
+    std::vector<Triangle> _triangles;
     mtr::Matrix modelMatrix;
 };
 

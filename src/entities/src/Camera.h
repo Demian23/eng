@@ -5,6 +5,7 @@
 
 namespace eng::ent {
 
+// TODO: remove inline and check that in assembly it's not function call
 class Camera final {
 public:
     Camera() noexcept = default;
@@ -35,6 +36,7 @@ public:
     {
         return vec::homogeneousToCartesian(eye);
     }
+
     [[nodiscard]] inline vec::Vec3F getTarget() const noexcept
     {
         return vec::homogeneousToCartesian(target);
