@@ -61,6 +61,17 @@ public:
         std::copy_n(this->begin(), newSize, result.begin());
         return result;
     }
+
+    template <size_t newSize, typename NewComponent>
+    constexpr DimensionalVector<newSize, NewComponent> convert() const noexcept
+    {
+        DimensionalVector<newSize, NewComponent> result{};
+        std::transform(this->begin(), this->begin() + newSize, result.begin(),
+                       [](auto &&component) {
+                           return static_cast<NewComponent>(component);
+                       });
+        return result;
+    }
 };
 
 template <size_t dimensions, numeric Component>

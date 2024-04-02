@@ -24,7 +24,9 @@ TEST_CASE("Line points generating")
 {
     std::vector<valueType> points;
     std::vector<valueType> expected{{0, 3}, {1, 2}, {2, 2}, {3, 1}, {4, 0}};
-    line(0, 4, 3, 0, std::back_inserter(points));
+    line(0, 4, 3, 0, [&points](long first, long second) {
+        points.emplace_back(first, second);
+    });
     CHECK_EQ(expected, points);
 }
 
@@ -32,14 +34,18 @@ TEST_CASE("ImprovedLine points generating")
 {
     std::vector<valueType> points;
     std::vector<valueType> expected{{0, 3}, {1, 2}, {2, 2}, {3, 1}, {4, 0}};
-    improvedBresenhamLine(0, 4, 3, 0, std::back_inserter(points));
+    improvedBresenhamLine(0, 4, 3, 0, [&points](long first, long second) {
+        points.emplace_back(first, second);
+    });
     CHECK_EQ(expected, points);
 }
 TEST_CASE("DDALine points generating")
 {
     std::vector<valueType> points;
     std::vector<valueType> expected{{0, 3}, {1, 2}, {2, 2}, {3, 1}, {4, 0}};
-    ddaLine(0.0f, 4.0f, 3.0f, 0.0f, std::back_inserter(points));
+    ddaLine(0.0f, 4.0f, 3.0f, 0.0f, [&points](long first, long second) {
+        points.emplace_back(first, second);
+    });
     CHECK_EQ(expected, points);
 }
 
@@ -48,25 +54,29 @@ TEST_CASE("ImprovedLine in difficult cases")
     std::vector<valueType> actual;
     std::vector<valueType> expected;
 
-    line(4, 3, 5, 12, std::back_inserter(expected));
-    improvedBresenhamLine(4, 3, 5, 12, std::back_inserter(actual));
+    line(4, 3, 5, 12, [&expected](long first, long second) {
+        expected.emplace_back(first, second);
+    });
+    improvedBresenhamLine(4, 3, 5, 12, [&actual](long first, long second) {
+        actual.emplace_back(first, second);
+    });
     CHECK_EQ(expected, actual);
 
-    line(4, 3, 3, 2, std::back_inserter(expected));
-    improvedBresenhamLine(4, 3, 3, 2, std::back_inserter(actual));
+    line(4, 3, 3, 2, [&expected](long first, long second) {
+        expected.emplace_back(first, second);
+    });
+    improvedBresenhamLine(4, 3, 3, 2, [&actual](long first, long second) {
+        actual.emplace_back(first, second);
+    });
     CHECK_EQ(expected, actual);
 
-    line(0, 9, 3, 3, std::back_inserter(expected));
-    improvedBresenhamLine(0, 9, 3, 3, std::back_inserter(actual));
+    line(0, 9, 3, 3, [&expected](long first, long second) {
+        expected.emplace_back(first, second);
+    });
+    improvedBresenhamLine(0, 9, 3, 3, [&actual](long first, long second) {
+        actual.emplace_back(first, second);
+    });
     CHECK_EQ(expected, actual);
-}
-
-TEST_CASE("Line points output in ostream")
-{
-    std::string expected = "0,3 1,2 2,2 3,1 4,0 ";
-    std::stringstream res;
-    line(0, 4, 3, 0, std::ostream_iterator<valueType>(res, " "));
-    REQUIRE_EQ(expected, res.str());
 }
 
 TEST_CASE("Time test for Bresenham's line, improvedLine and ddaLine")
@@ -109,31 +119,34 @@ TEST_CASE("Time test for Bresenham's line, improvedLine and ddaLine")
     std::vector<valueType> ddaLineResult{};
 
     auto startSimple = std::chrono::high_resolution_clock::now();
-    std::for_each(
-        simpleLine.begin(), simpleLine.end(),
-        [out = std::back_inserter(simpleLineResult)](auto lineRep) mutable {
-            line(lineRep.x0y0.first, lineRep.x1y1.first, lineRep.x0y0.second,
-                 lineRep.x1y1.second, out);
-        });
+    std::for_each(simpleLine.begin(), simpleLine.end(),
+                  [out = [&simpleLineResult](long first, long second) {
+                      simpleLineResult.emplace_back(first, second);
+                  }](auto lineRep) mutable {
+                      line(lineRep.x0y0.first, lineRep.x1y1.first,
+                           lineRep.x0y0.second, lineRep.x1y1.second, out);
+                  });
     auto endSimple = std::chrono::high_resolution_clock::now();
     // sleep, cache?
     auto startImproved = std::chrono::high_resolution_clock::now();
-    std::for_each(
-        improvedLine.begin(), improvedLine.end(),
-        [out = std::back_inserter(improvedLineResult)](auto lineRep) mutable {
-            improvedBresenhamLine(lineRep.x0y0.first, lineRep.x1y1.first,
-                                  lineRep.x0y0.second, lineRep.x1y1.second,
-                                  out);
-        });
+    std::for_each(improvedLine.begin(), improvedLine.end(),
+                  [out = [&improvedLineResult](long first, long second) {
+                      improvedLineResult.emplace_back(first, second);
+                  }](auto lineRep) mutable {
+                      improvedBresenhamLine(
+                          lineRep.x0y0.first, lineRep.x1y1.first,
+                          lineRep.x0y0.second, lineRep.x1y1.second, out);
+                  });
     auto endImproved = std::chrono::high_resolution_clock::now();
 
     auto startDDA = std::chrono::high_resolution_clock::now();
-    std::for_each(
-        ddaLineInput.begin(), ddaLineInput.end(),
-        [out = std::back_inserter(ddaLineResult)](auto lineRep) mutable {
-            ddaLine(lineRep.x0y0.first, lineRep.x1y1.first, lineRep.x0y0.second,
-                    lineRep.x1y1.second, out);
-        });
+    std::for_each(ddaLineInput.begin(), ddaLineInput.end(),
+                  [out = [&ddaLineResult](long first, long second) {
+                      ddaLineResult.emplace_back(first, second);
+                  }](auto lineRep) mutable {
+                      ddaLine(lineRep.x0y0.first, lineRep.x1y1.first,
+                              lineRep.x0y0.second, lineRep.x1y1.second, out);
+                  });
     auto endDDA = std::chrono::high_resolution_clock::now();
 
     auto simpleDuration = std::chrono::duration_cast<std::chrono::milliseconds>(

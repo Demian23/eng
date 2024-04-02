@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../base/src/eng.h"
+#include "../../vector/src/DimensionalVector.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -9,8 +10,8 @@
 namespace eng::alg {
 
 // Bresenham's line
-template <typename OutIterator>
-void line(integral x0, integral x1, integral y0, integral y1, OutIterator &&out)
+template <typename Out>
+void line(integral x0, integral x1, integral y0, integral y1, Out &&out)
 {
     int64_t deltaX = std::abs(x1 - x0);
     int64_t deltaY = std::abs(y1 - y0);
@@ -18,8 +19,7 @@ void line(integral x0, integral x1, integral y0, integral y1, OutIterator &&out)
     auto signY = (y0 < y1) ? 1 : -1;
     int64_t error = deltaX - deltaY;
     for (auto x = x0, y = y0;;) {
-        *out = {x, y};
-        ++out;
+        out(x, y);
         if (x == x1 && y == y1)
             break;
         auto errorForCheck = error * 2;
@@ -34,9 +34,9 @@ void line(integral x0, integral x1, integral y0, integral y1, OutIterator &&out)
     }
 }
 
-template <typename OutIterator>
+template <typename Out>
 void improvedBresenhamLine(integral x0, integral x1, integral y0, integral y1,
-                           OutIterator &&out)
+                           Out &&out)
 {
     auto lineWidth = std::abs(x1 - x0);
     auto lineHeight = std::abs(y1 - y0);
@@ -57,8 +57,7 @@ void improvedBresenhamLine(integral x0, integral x1, integral y0, integral y1,
     for (integral x = 0, y = 0; x <= incrementSideOfLineRectangle; x++) {
         auto xt = x0 + m11 * x + m12 * y;
         auto yt = y0 + m21 * x + m22 * y;
-        *out = {xt, yt};
-        ++out;
+        out(xt, yt);
         error += errorInc;
         if (error > incrementSideOfLineRectangle) {
             error -= errorDec;
@@ -67,9 +66,8 @@ void improvedBresenhamLine(integral x0, integral x1, integral y0, integral y1,
     }
 }
 
-template <typename OutIterator>
-void ddaLine(floating x0, floating x1, floating y0, floating y1,
-             OutIterator &&out)
+template <typename Out>
+void ddaLine(floating x0, floating x1, floating y0, floating y1, Out &&out)
 {
     auto xStart = static_cast<integral>(std::round(x0));
     auto xEnd = static_cast<integral>(std::round(x1));
@@ -86,8 +84,8 @@ void ddaLine(floating x0, floating x1, floating y0, floating y1,
                  static_cast<floating>(incrementSideOfLineRectangle);
     for (integral i = 0; i <= incrementSideOfLineRectangle; i++) {
         // get this values from out iterator?
-        *out = {static_cast<integral>(std::round(x)),
-                static_cast<integral>(std::round(y))};
+        out(static_cast<integral>(std::round(x)),
+            static_cast<integral>(std::round(y)));
         // accuracy?
         x += xStep;
         y += yStep;
@@ -131,6 +129,14 @@ void polygonTriangulation(VertexIter begin, VertexIter end, Out out)
         ++begin;
     }
     *out = {commonVertex, firstVertex, lastVertex};
+}
+
+template <typename Out>
+void drawTriangle(vec::Vec2I a, vec::Vec2I b, vec::Vec2I c, Out inserter)
+{
+    eng::alg::line(a[0], c[0], a[1], c[1], inserter);
+    eng::alg::line(a[0], b[0], a[1], b[1], inserter);
+    eng::alg::line(b[0], c[0], b[1], c[1], inserter);
 }
 
 } // namespace eng::alg

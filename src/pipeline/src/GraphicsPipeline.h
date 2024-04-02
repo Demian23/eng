@@ -27,9 +27,38 @@ public:
 
     void setZBufferSize(uint32_t bufferSize, uint32_t xSize);
 
+    template <typename Out>
+    void drawMesh(int minX, int maxX, int minY, int maxY, Out out)
+    {
+        auto verticesCopy = applyVertexTransformations(minX, maxX, minY, maxY);
+        std::fill(_zBuffer.begin(), _zBuffer.end(), 1);
+        auto copyIterator = verticesCopy.cbegin();
+        std::for_each(
+            trianglesBegin(), trianglesEnd(),
+            [=, cameraEye = _camera.getEye(), zBufferIter = _zBuffer.begin(),
+             zBufferSize = _zBuffer.size()](auto &&polygon) mutable {
+                auto a = (copyIterator + polygon[0].vertexOffset)
+                             ->template trim<3>();
+                auto b = (copyIterator + polygon[1].vertexOffset)
+                             ->template trim<3>();
+                auto c = (copyIterator + polygon[2].vertexOffset)
+                             ->template trim<3>();
+
+                auto triangleNormal = vec::cross(c - a, b - a);
+                auto eyeDirection = a - cameraEye;
+                auto normalProduct = eyeDirection * triangleNormal;
+
+                if (normalProduct >= 0) {
+                    alg::drawTriangle(a.template convert<2, integral>(),
+                                      b.template convert<2, integral>(),
+                                      c.template convert<2, integral>(), out);
+                }
+            });
+    }
+
     // with zBuffer check and back-face culling
     template <typename Out>
-    void rasterModel(int minX, int maxX, int minY, int maxY, Out out)
+    void drawFilled(int minX, int maxX, int minY, int maxY, Out out)
     {
         auto verticesCopy = applyVertexTransformations(minX, maxX, minY, maxY);
         std::fill(_zBuffer.begin(), _zBuffer.end(), 1);
@@ -56,12 +85,12 @@ public:
                                            czInverse =
                                                1 / c[2]](uint32_t x, uint32_t y,
                                                          floating u, floating v,
-                                                         floating w) {
+                                                         floating w) mutable {
                         auto z =
                             1 / (azInverse * u + bzInverse * v + czInverse * w);
                         auto point = (zBufferIter + y * xSize + x);
                         if (y * xSize + x < zBufferSize && z < *point) {
-                            out(x, y, u, v, w);
+                            out(x, y);
                             *point = z;
                         }
                     };

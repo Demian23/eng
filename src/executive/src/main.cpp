@@ -1,5 +1,5 @@
 #include "../../objparser/src/ObjParser.h"
-#include "ColoredDrawer.h"
+#include "ScreenDrawer.h"
 #include <FL/Fl.H>
 #include <cxxopts.hpp>
 #include <exception>
@@ -128,7 +128,7 @@ int initExecutiveAndRun(std::string_view pathToObjFile, eng::ent::Camera camera,
     eng::ent::Model model{std::move(vertices), std::move(triangles),
                           std::move(normals), std::move(textures)};
     model.addModelTransformation(modelTransformation);
-    ColoredDrawer drawer{w, h - 20, std::move(model), camera, projection};
+    ScreenDrawer drawer{w, h - 20, std::move(model), camera, projection};
     drawer.end();
     drawer.show();
     return Fl::run();

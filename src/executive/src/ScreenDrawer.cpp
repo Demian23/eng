@@ -1,6 +1,7 @@
 #include "ScreenDrawer.h"
 
 enum class ScreenDrawer::Focused { Target, Camera };
+enum class ScreenDrawer::DrawStyle { Mesh, Filled };
 
 ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
                            eng::ent::Camera camera,
@@ -8,49 +9,30 @@ ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
     : Fl_Window{width, height}, _model(std::move(model)), _camera(camera),
       _projection(cameraProjection), _pipe{_model, _camera, _projection},
       screenArray{static_cast<uint64_t>(width * height)},
-      currentFocus{Focused::Target}
-{}
+      currentFocus{Focused::Target}, currentStyle{DrawStyle::Mesh}
+{
+    _pipe.setZBufferSize(static_cast<uint32_t>(width * height),
+                         static_cast<uint32_t>(w()));
+}
 
 void ScreenDrawer::draw()
 {
     screenArray.fill({0, 0, 0});
-    auto copy = _pipe.applyVertexTransformations(0, w(), 0, h());
-    auto copyIterator = copy.cbegin();
     RGB color =
         currentFocus == Focused::Camera ? RGB{0, 0, 255} : RGB{0, 255, 0};
-    std::for_each(
-        _pipe.trianglesBegin(), _pipe.trianglesEnd(),
-        [=, inserter = RGBArrayInserter{screenArray, color,
-                                        static_cast<uint32_t>(w())}](
-            auto &&polygon) mutable {
-            eng::alg::line(static_cast<eng::integral>(
-                               (*(copyIterator + polygon[0].vertexOffset))[0]),
-                           static_cast<eng::integral>(
-                               (*(polygon[2].vertexOffset + copyIterator))[0]),
-                           static_cast<eng::integral>(
-                               (*(copyIterator + polygon[0].vertexOffset))[1]),
-                           static_cast<eng::integral>(
-                               (*(polygon[2].vertexOffset + copyIterator))[1]),
-                           inserter);
-            eng::alg::line(static_cast<eng::integral>(
-                               (*(copyIterator + polygon[0].vertexOffset))[0]),
-                           static_cast<eng::integral>(
-                               (*(polygon[1].vertexOffset + copyIterator))[0]),
-                           static_cast<eng::integral>(
-                               (*(copyIterator + polygon[0].vertexOffset))[1]),
-                           static_cast<eng::integral>(
-                               (*(polygon[1].vertexOffset + copyIterator))[1]),
-                           inserter);
-            eng::alg::line(static_cast<eng::integral>(
-                               (*(copyIterator + polygon[1].vertexOffset))[0]),
-                           static_cast<eng::integral>(
-                               (*(polygon[2].vertexOffset + copyIterator))[0]),
-                           static_cast<eng::integral>(
-                               (*(copyIterator + polygon[1].vertexOffset))[1]),
-                           static_cast<eng::integral>(
-                               (*(polygon[2].vertexOffset + copyIterator))[1]),
-                           inserter);
-        });
+    auto colorInserter = [=, this, xSize = static_cast<uint32_t>(w())](
+                             long long x, long long y) {
+        screenArray[static_cast<uint32_t>(y) * xSize +
+                    static_cast<uint32_t>(x)] = color;
+    };
+    switch (currentStyle) {
+    case DrawStyle::Mesh:
+        _pipe.drawMesh(0, w(), 0, h(), colorInserter);
+        break;
+    case DrawStyle::Filled:
+        _pipe.drawFilled(0, w(), 0, h(), colorInserter);
+        break;
+    }
     fl_draw_image(screenArray.data(), 0, 0, w(), h(), 3);
 }
 
@@ -88,6 +70,7 @@ int ScreenDrawer::handle(int event)
         MoveZ = 'f',
         PerspectiveAngle = 'e',
         Statistic = 'i',
+        DrawingStyle = 'o'
     };
     switch (event) {
     case FL_FOCUS:
@@ -95,6 +78,10 @@ int ScreenDrawer::handle(int event)
         return 1;
     case FL_KEYBOARD:
         switch (Fl::event_key()) {
+        case DrawingStyle:
+            currentStyle = currentStyle == DrawStyle::Mesh ? DrawStyle::Filled
+                                                           : DrawStyle::Mesh;
+            break;
         case ChangeFocusToCamera:
             currentFocus = Focused::Camera;
             break;

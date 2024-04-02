@@ -7,7 +7,6 @@
 #include "../../matrix/src/Viewport.h"
 #include "../../pipeline/src/GraphicsPipeline.h"
 #include "RGBArray.h"
-#include "RGBArrayInserter.h"
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/fl_draw.H>
@@ -30,7 +29,9 @@ protected:
     eng::pipe::GraphicsPipeline _pipe;
     RGBArray screenArray;
     enum class Focused;
+    enum class DrawStyle;
     Focused currentFocus;
+    DrawStyle currentStyle;
 
     void printOutStatistic(std::ostream &stream);
 };
