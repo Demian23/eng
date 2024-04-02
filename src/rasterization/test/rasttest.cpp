@@ -35,7 +35,8 @@ TEST_CASE("Points generating")
 {
     Triangle triangle{{{2, 1}, {4, 4}, {5, 1}}};
     std::set<std::pair<eng::floating, eng::floating>> actual{};
-    std::set<std::pair<eng::floating, eng::floating>> expected{{{2, 1}, {3, 1}}};
+    std::set<std::pair<eng::floating, eng::floating>> expected{
+        {{2, 1}, {3, 1}}};
 
     trianglePoints(triangle, std::inserter(actual, actual.begin()));
     CHECK_NE(actual, expected);

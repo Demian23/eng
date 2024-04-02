@@ -35,6 +35,8 @@ public:
         return rgbArrayRep[0];
     }
 
+    inline size_t size() const noexcept { return rgbArrayRep.size(); }
+
 private:
     std::vector<RGB> rgbArrayRep;
 };

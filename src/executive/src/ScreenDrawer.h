@@ -17,10 +17,9 @@
 
 class ScreenDrawer : public Fl_Window {
 public:
-
     ScreenDrawer(int width, int height, eng::ent::Model &&model,
-                               eng::ent::Camera camera,
-                               eng::ent::CameraProjection cameraProjection);
+                 eng::ent::Camera camera,
+                 eng::ent::CameraProjection cameraProjection);
     void draw() override;
     int handle(int) override;
 
@@ -35,4 +34,3 @@ protected:
 
     void printOutStatistic(std::ostream &stream);
 };
-

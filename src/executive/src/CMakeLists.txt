@@ -4,8 +4,7 @@ add_executable(executive main.cpp
         ScreenDrawer.h
         ScreenDrawer.cpp
         ColoredDrawer.cpp
-        ColoredDrawer.h
-        RGBArrayInterpolator.h)
+        ColoredDrawer.h)
 
 find_library(FLTK NAME fltk)
 target_link_libraries(executive PRIVATE options warnings objparser mtr pipe FLTK)

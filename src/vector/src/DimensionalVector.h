@@ -54,8 +54,9 @@ public:
         return a;
     }
 
-    template<size_t newSize>
-    constexpr DimensionalVector<newSize, Component> trim() const noexcept{
+    template <size_t newSize>
+    constexpr DimensionalVector<newSize, Component> trim() const noexcept
+    {
         DimensionalVector<newSize, Component> result{};
         std::copy_n(this->begin(), newSize, result.begin());
         return result;
@@ -107,6 +108,7 @@ using Vec4F = FloatingVector<4>;
 
 using Vec2I = IntegralVector<2>;
 template <numeric Component> using Vec2 = DimensionalVector<2, Component>;
+template <numeric Component> using Vec3 = DimensionalVector<3, Component>;
 
 template <numeric Component> Vec2<Component> perp(Vec2<Component> a) noexcept
 {
@@ -118,6 +120,16 @@ template <numeric Component>
 Component perpDot(const Vec2<Component> &a, const Vec2<Component> &b) noexcept
 {
     return a[0] * b[1] - a[1] * b[0];
+}
+
+template <numeric Component>
+Vec3<Component> cross(Vec3<Component> a, Vec3<Component> b) noexcept
+{
+    Vec3<Component> result;
+    result[0] = a[1] * b[2] - a[2] * b[1];
+    result[1] = a[2] * b[0] - a[0] * b[2];
+    result[2] = a[0] * b[1] - a[1] * b[0];
+    return result;
 }
 
 Vec4F vectorMultiplicationForHomogeneous(const Vec4F &a,

@@ -41,6 +41,12 @@ GraphicsPipeline::applyVertexTransformations(int minX, int maxX, int minY,
     return copy;
 }
 
+void GraphicsPipeline::setZBufferSize(uint32_t bufferSize, uint32_t xSize)
+{
+    _zBuffer.resize(bufferSize);
+    _xSize = xSize;
+}
+
 [[nodiscard]] ent::Model::polygonIteratorType
 GraphicsPipeline::trianglesBegin() const noexcept
 {

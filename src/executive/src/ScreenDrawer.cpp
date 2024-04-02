@@ -1,13 +1,14 @@
 #include "ScreenDrawer.h"
 
-enum class ScreenDrawer::Focused{Target, Camera};
+enum class ScreenDrawer::Focused { Target, Camera };
 
 ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
-             eng::ent::Camera camera,
-             eng::ent::CameraProjection cameraProjection)
+                           eng::ent::Camera camera,
+                           eng::ent::CameraProjection cameraProjection)
     : Fl_Window{width, height}, _model(std::move(model)), _camera(camera),
       _projection(cameraProjection), _pipe{_model, _camera, _projection},
-      screenArray{static_cast<uint64_t>(width * height)}, currentFocus{Focused::Target}
+      screenArray{static_cast<uint64_t>(width * height)},
+      currentFocus{Focused::Target}
 {}
 
 void ScreenDrawer::draw()
@@ -15,7 +16,8 @@ void ScreenDrawer::draw()
     screenArray.fill({0, 0, 0});
     auto copy = _pipe.applyVertexTransformations(0, w(), 0, h());
     auto copyIterator = copy.cbegin();
-    RGB color = currentFocus == Focused::Camera ? RGB{0, 0, 255} : RGB{0, 255, 0};
+    RGB color =
+        currentFocus == Focused::Camera ? RGB{0, 0, 255} : RGB{0, 255, 0};
     std::for_each(
         _pipe.trianglesBegin(), _pipe.trianglesEnd(),
         [=, inserter = RGBArrayInserter{screenArray, color,

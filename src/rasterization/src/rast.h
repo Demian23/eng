@@ -25,28 +25,30 @@ barycentricCoordinates(eng::vec::Vec2I p, Triangle triangle)
             wB / triangleSquare2x, wC / triangleSquare2x};
 }
 
-template <typename OutIter>
-void barycentricPoint(eng::vec::Vec2F a, eng::vec::Vec2F b, eng::vec::Vec2F c, OutIter out)
+template <typename Callback>
+void generateBarycentricCoordinatesForEachPointInTriangle(eng::vec::Vec2F a,
+                                                          eng::vec::Vec2F b,
+                                                          eng::vec::Vec2F c,
+                                                          Callback out)
 {
     auto b_a = b - a;
     auto c_a = c - a;
     auto triangleSquare2x =
         static_cast<eng::floating>(std::abs(perpDot(b_a, c_a)));
     auto denominator = 1 / triangleSquare2x;
-    auto xMin = static_cast<uint64_t>(std::floor(std::min({a[0], b[0], c[0]})));
-    auto yMin = static_cast<uint64_t>(std::floor(std::min({a[1], b[1], c[1]})));
-    auto xMax = static_cast<uint64_t>(std::floor(std::max({a[0], b[0], c[0]})));
-    auto yMax = static_cast<uint64_t>(std::floor(std::max({a[1], b[1], c[1]})));
+    auto xMin = static_cast<uint32_t>(std::floor(std::min({a[0], b[0], c[0]})));
+    auto yMin = static_cast<uint32_t>(std::floor(std::min({a[1], b[1], c[1]})));
+    auto xMax = static_cast<uint32_t>(std::floor(std::max({a[0], b[0], c[0]})));
+    auto yMax = static_cast<uint32_t>(std::floor(std::max({a[1], b[1], c[1]})));
     for (auto y = yMin; y <= yMax; y++) {
         for (auto x = xMin; x <= xMax; x++) {
-            auto p_a =  eng::vec::Vec2F{static_cast<eng::floating>(x), static_cast<eng::floating>(y)} - a;
-            auto v = std::abs(perpDot(p_a, c_a)) *
-                     denominator;
-            auto w = std::abs(perpDot(p_a, b_a)) *
-                     denominator;
+            auto p_a = eng::vec::Vec2F{static_cast<eng::floating>(x),
+                                       static_cast<eng::floating>(y)} -
+                       a;
+            auto v = std::abs(perpDot(p_a, c_a)) * denominator;
+            auto w = std::abs(perpDot(p_a, b_a)) * denominator;
             if (v >= 0 && w >= 0 && v + w <= static_cast<decltype(v)>(1)) {
-                *out = {x, y, 1 - w - v, v, w};
-                ++out;
+                out(x, y, 1 - w - v, v, w);
             }
         }
     }

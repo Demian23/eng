@@ -160,7 +160,7 @@ void autoPositioningForModel(std::array<eng::floating, 6> dimensions,
     modelTransformation =
         modelTransformation *
         eng::mtr::Move{{0, -modelHeight / 2, -modelThickness / 2}};
-    projection.setZComponent(zMin + 1, zMax + 1);
+    projection.setZComponent(zMin + 1, zMax + 1); // TODO: here z buffer problem
 
     eng::floating diagonalForCircumscribedParallelepiped =
         std::sqrt(modelWidth * modelWidth + modelHeight * modelHeight +
