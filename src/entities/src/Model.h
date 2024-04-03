@@ -1,9 +1,8 @@
 #pragma once
 
-#include "../../base/src/PolygonVertexOnly.h"
-#include "../../matrix/src/Move.h"
-#include "../../matrix/src/Rotate.h"
-#include "../../matrix/src/Scale.h"
+#include "../../base/src/Elements.h"
+#include "../../matrix/src/Matrix.h"
+#include "../../vector/src/DimensionalVector.h"
 #include <vector>
 
 namespace eng::ent {
@@ -20,13 +19,17 @@ class Model final {
 public:
     using polygonIteratorType = std::vector<Triangle>::const_iterator;
     using vertexIteratorType = std::vector<Vertex>::const_iterator;
+    using normalsIteratorType = std::vector<Normal>::const_iterator;
+
+    static constexpr vec::Vec3F defaultAlbedo = {0.18f, 0.18f, 0.18f};
 
     Model(std::vector<Vertex> &&vertices, std::vector<Triangle> &&polygons,
           std::vector<Normal> &&normals = {},
-          std::vector<TextureCoord> &&textureCoords = {})
+          std::vector<TextureCoord> &&textureCoords = {},
+          vec::Vec3F albedo = defaultAlbedo)
         : _vertices(std::move(vertices)), _normals(std::move(normals)),
           _textureCoords(std::move(textureCoords)), _triangles(polygons),
-          modelMatrix(mtr::Matrix::createIdentityMatrix())
+          _albedo{albedo}, modelMatrix(mtr::Matrix::createIdentityMatrix())
     {}
 
     void addModelTransformation(mtr::Matrix transformation) noexcept;
@@ -53,6 +56,19 @@ public:
 
     [[nodiscard]] vertexIteratorType verticesEnd() const noexcept;
 
+    [[nodiscard]] normalsIteratorType normalsBegin() const noexcept;
+
+    [[nodiscard]] normalsIteratorType normalsEnd() const noexcept;
+
+    [[nodiscard]] inline vec::Vec3F getAlbedo() const noexcept
+    {
+        return _albedo;
+    }
+    inline void setAlbedo(vec::Vec3F newAlbedo) noexcept
+    {
+        _albedo = newAlbedo;
+    }
+
     [[nodiscard]] bool empty() const noexcept;
 
 private:
@@ -60,6 +76,7 @@ private:
     std::vector<Normal> _normals;
     std::vector<TextureCoord> _textureCoords;
     std::vector<Triangle> _triangles;
+    vec::Vec3F _albedo;
     mtr::Matrix modelMatrix;
 };
 

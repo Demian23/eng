@@ -1,10 +1,5 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "../src/Move.h"
-#include "../src/OrthographicProjection.h"
-#include "../src/Rotate.h"
-#include "../src/Scale.h"
-#include "../src/View.h"
-#include "../src/Viewport.h"
+#include "../src/Matrix.h"
 #include <doctest/doctest.h>
 
 using namespace eng;
@@ -37,7 +32,7 @@ TEST_CASE("Matrix multiplication with matrix")
 TEST_CASE("Vector multiplication with Scale")
 {
     Vec4F vector{3, 2, 1, 1}, expected{1.5, 4, 1, 1};
-    Scale scaleMatrix{{0.5, 2, 1}};
+    auto scaleMatrix = Matrix::getScale({0.5, 2, 1});
     auto result = scaleMatrix * vector;
 
     REQUIRE_EQ(expected, result);
@@ -46,7 +41,7 @@ TEST_CASE("Vector multiplication with Scale")
 TEST_CASE("Vector multiplication with Move")
 {
     Vec4F vector{3, 2, 1, 1}, expected{8, 7, -1, 1};
-    Move moveMatrix{{5, 5, -2}};
+    auto moveMatrix = Matrix::getMove({5, 5, -2});
     auto result = moveMatrix * vector;
 
     REQUIRE_EQ(expected, result);

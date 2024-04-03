@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../../algorithm/src/alg.h"
-#include "../../base/src/PolygonVertexOnly.h"
 #include "../../vector/src/DimensionalVector.h"
 
 namespace eng::rast {

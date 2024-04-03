@@ -1,7 +1,28 @@
 #include "GraphicsPipeline.h"
-#include "../../matrix/src/Viewport.h"
+#include "../../base/src/Elements.h"
 
 namespace eng::pipe {
+
+GraphicsPipeline::GraphicsPipeline(ent::Model &model, ent::Camera &camera,
+                                   ent::CameraProjection &projection)
+    : _model(model), _camera(camera), _projection(projection), _zBuffer{},
+      light{}, _xSize{}, _projectionType{ent::ProjectionType::Perspective}
+{
+    light.color = {200, 60, 200};
+    _model.setAlbedo({0.18f, 0.8f, 0.6f});
+}
+[[nodiscard]] std::vector<Normal>
+GraphicsPipeline::applyNormalTransformations() const noexcept
+{
+    std::vector<Normal> normalsCopy{_model.normalsBegin(), _model.normalsEnd()};
+    std::transform(normalsCopy.begin(), normalsCopy.end(), normalsCopy.begin(),
+                   [matrix = _model.getModelMatrix()](vec::Vec3F normal) {
+                       return (matrix *
+                               vec::Vec4F{normal[0], normal[1], normal[2], 0})
+                           .trim<3>();
+                   });
+    return normalsCopy;
+}
 
 [[nodiscard]] std::vector<Vertex>
 GraphicsPipeline::applyVertexTransformations(int minX, int maxX, int minY,
@@ -9,9 +30,9 @@ GraphicsPipeline::applyVertexTransformations(int minX, int maxX, int minY,
 {
     std::vector<Vertex> copy{_model.verticesBegin(), _model.verticesEnd()};
     auto transformationMatrix =
-        eng::mtr::Viewport{
+        mtr::Matrix::getViewport(
             static_cast<floating>(minX), static_cast<floating>(maxX),
-            static_cast<floating>(minY), static_cast<floating>(maxY)} *
+            static_cast<floating>(minY), static_cast<floating>(maxY)) *
         _projection.getProjectionMatrix(_projectionType) *
         _camera.getViewMatrix() * _model.getModelMatrix();
 
@@ -47,16 +68,6 @@ void GraphicsPipeline::setZBufferSize(uint32_t bufferSize, uint32_t xSize)
     _xSize = xSize;
 }
 
-[[nodiscard]] ent::Model::polygonIteratorType
-GraphicsPipeline::trianglesBegin() const noexcept
-{
-    return _model.trianglesBegin();
-}
-[[nodiscard]] ent::Model::polygonIteratorType
-GraphicsPipeline::trianglesEnd() const noexcept
-{
-    return _model.trianglesEnd();
-}
 [[nodiscard]] ent::ProjectionType
 GraphicsPipeline::getProjectionType() const noexcept
 {

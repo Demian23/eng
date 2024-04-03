@@ -4,7 +4,6 @@
 #include "../../entities/src/Camera.h"
 #include "../../entities/src/CameraProjection.h"
 #include "../../entities/src/Model.h"
-#include "../../matrix/src/Viewport.h"
 #include "../../pipeline/src/GraphicsPipeline.h"
 #include "RGBArray.h"
 #include <FL/Fl.H>

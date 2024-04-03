@@ -25,25 +25,40 @@ public:
 
     [[nodiscard]] Vec4F operator*(Vec4F vector) const noexcept;
 
-    // TODO implement matrix multiplication
     [[nodiscard]] Matrix operator*(const Matrix &matrix) const noexcept;
 
-    inline bool operator==(const Matrix &matrix) const noexcept
-    {
-        return matrix_ == matrix.matrix_;
-    }
-    inline bool operator!=(const Matrix &matrix) const noexcept
-    {
-        return matrix_ != matrix.matrix_;
-    }
+    bool operator==(const Matrix &matrix) const noexcept;
 
-    static Matrix createIdentityMatrix()
-    {
-        return Matrix{{{{1.0f, 0.0f, 0.0f, 0.0f},
-                        {0.0f, 1.0f, 0.0f, 0.0f},
-                        {0.0f, 0.0f, 1.0f, 0.0f},
-                        {0.0f, 0.0f, 0.0f, 1.0f}}}};
-    }
+    bool operator!=(const Matrix &matrix) const noexcept;
+
+    static Matrix createIdentityMatrix();
+
+    static Matrix getMove(Vec3F moveVector);
+
+    static Matrix getRotateX(floating degree);
+
+    static Matrix getRotateY(floating degree);
+
+    static Matrix getRotateZ(floating degree);
+
+    static Matrix getScale(Vec3F scaleVector);
+
+    static Matrix getView(Vec4F eye, Vec4F target, Vec4F up);
+
+    static Matrix getViewport(floating xMin, floating xMax, floating yMin,
+                              floating yMax);
+
+    static Matrix getOrthographicProjection(floating width, floating height,
+                                            floating zMin, floating zMax);
+
+    static Matrix getPerspectiveProjection(floating xMin, floating xMax,
+                                           floating yMin, floating yMax,
+                                           floating zMin, floating zMax);
+
+    static Matrix getPerspectiveProjectionWithAngle(floating degreeInRad,
+                                                    floating aspect,
+                                                    floating zMin,
+                                                    floating zMax);
 
 protected:
     MatrixRepresentation matrix_;

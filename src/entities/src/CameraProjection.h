@@ -13,51 +13,26 @@ class CameraProjection {
 public:
     CameraProjection() noexcept = default;
     CameraProjection(floating w, floating h, floating zMin, floating zMax,
-                     floating projectionAngle) noexcept
-        : width{w}, height{h}, zNear{zMin}, zFar{zMax}, angle{projectionAngle}
-    {}
+                     floating projectionAngle) noexcept;
 
-    inline void reset(floating w, floating h, floating zMin, floating zMax,
-                      floating projectionAngle) noexcept
-    {
-        width = w;
-        height = h;
-        zNear = zMin;
-        zFar = zMax;
-        angle = projectionAngle;
-    }
+    void reset(floating w, floating h, floating zMin, floating zMax,
+               floating projectionAngle) noexcept;
 
-    inline void setZComponent(floating zMin, floating zMax) noexcept
-    {
-        zNear = zMin;
-        zFar = zMax;
-    }
+    void setZComponent(floating zMin, floating zMax) noexcept;
 
-    [[nodiscard]] inline floating getAngleInDegrees() const noexcept
-    {
-        return angle;
-    }
+    [[nodiscard]] floating getAngleInDegrees() const noexcept;
 
-    inline void setAngleInDegrees(floating newAngle) noexcept
-    {
-        angle = newAngle;
-    }
+    void setAngleInDegrees(floating newAngle) noexcept;
 
-    [[nodiscard]] inline floating getAspect() const noexcept
-    {
-        return width / height;
-    }
+    [[nodiscard]] floating getAspect() const noexcept;
 
-    [[nodiscard]] inline floating getZMin() const noexcept { return zNear; }
+    [[nodiscard]] floating getZMin() const noexcept;
 
     [[nodiscard]] mtr::Matrix
     getProjectionMatrix(ProjectionType projectionType) const noexcept;
 
     [[nodiscard]] std::pair<eng::floating, eng::floating>
-    getZComponent() const noexcept
-    {
-        return {zNear, zFar};
-    }
+    getZComponent() const noexcept;
 
 private:
     floating width{}, height{};

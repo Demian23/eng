@@ -78,8 +78,8 @@ int main(int argc, const char *argv[])
                 auto scaleCoefficient = result["scale"].as<eng::floating>();
                 modelTransformation =
                     modelTransformation *
-                    eng::mtr::Scale{
-                        {scaleCoefficient, scaleCoefficient, scaleCoefficient}};
+                    eng::mtr::Matrix::getScale(
+                        {scaleCoefficient, scaleCoefficient, scaleCoefficient});
             }
         }
 
@@ -159,8 +159,10 @@ void autoPositioningForModel(std::array<eng::floating, 6> dimensions,
 
     modelTransformation =
         modelTransformation *
-        eng::mtr::Move{{0, -modelHeight / 2, -modelThickness / 2}};
-    projection.setZComponent(zMin + 1, zMax + 1); // TODO: here z buffer problem
+        eng::mtr::Matrix::getMove({0, -modelHeight / 2, -modelThickness / 2});
+    projection.setZComponent(
+        modelThickness * 0.01f,
+        std::max(100.f, modelThickness * 4)); // TODO: here z buffer problem
 
     eng::floating diagonalForCircumscribedParallelepiped =
         std::sqrt(modelWidth * modelWidth + modelHeight * modelHeight +

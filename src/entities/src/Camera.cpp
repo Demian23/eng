@@ -1,7 +1,4 @@
 #include "Camera.h"
-#include "../../matrix/src/Move.h"
-#include "../../matrix/src/Rotate.h"
-#include "../../matrix/src/View.h"
 
 namespace eng::ent {
 
@@ -23,22 +20,22 @@ void Camera::reset(vec::Vec3F cameraEye, vec::Vec3F cameraTarget,
 
 mtr::Matrix Camera::getViewMatrix() const noexcept
 {
-    return mtr::View{eye, target, up};
+    return mtr::Matrix::getView(eye, target, up);
 }
 
 void Camera::rotateX(floating degree) noexcept
 {
-    eye = mtr::RotateX{degree} * eye;
+    eye = mtr::Matrix::getRotateX(degree) * eye;
 }
 
 void Camera::rotateY(floating degree) noexcept
 {
-    eye = mtr::RotateY{degree} * eye;
+    eye = mtr::Matrix::getRotateY(degree) * eye;
 }
 
 void Camera::rotateZ(floating degree) noexcept
 {
-    eye = mtr::RotateZ{degree} * eye;
+    eye = mtr::Matrix::getRotateZ(degree) * eye;
 }
 
 void Camera::changeEyeAsSphericalVector(unsigned index,
@@ -67,7 +64,22 @@ void Camera::changeAzimuthalAngle(floating addition) noexcept
 
 void Camera::moveTarget(vec::Vec3F position) noexcept
 {
-    target = mtr::Move{position} * target;
+    target = mtr::Matrix::getMove(position) * target;
+}
+
+[[nodiscard]] eng::floating Camera::getDiagonalLength() const noexcept
+{
+    return eye.length();
+}
+
+[[nodiscard]] vec::Vec3F Camera::getEye() const noexcept
+{
+    return vec::homogeneousToCartesian(eye);
+}
+
+[[nodiscard]] vec::Vec3F Camera::getTarget() const noexcept
+{
+    return vec::homogeneousToCartesian(target);
 }
 
 } // namespace eng::ent

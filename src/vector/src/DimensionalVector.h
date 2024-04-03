@@ -102,6 +102,14 @@ operator+(const DimensionalVector<dimensions, Component> &a,
 
 template <size_t dimensions, numeric Component>
 DimensionalVector<dimensions, Component>
+operator/(const DimensionalVector<dimensions, Component> &a, floating value)
+{
+    auto z = a;
+    return z /= value;
+}
+
+template <size_t dimensions, numeric Component>
+DimensionalVector<dimensions, Component>
 normalize(DimensionalVector<dimensions, Component> from)
 {
     return from.normalize();

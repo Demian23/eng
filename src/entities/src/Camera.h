@@ -27,20 +27,11 @@ public:
 
     void moveTarget(vec::Vec3F position) noexcept;
 
-    [[nodiscard]] inline eng::floating getDiagonalLength() const noexcept
-    {
-        return eye.length();
-    }
+    [[nodiscard]] eng::floating getDiagonalLength() const noexcept;
 
-    [[nodiscard]] inline const vec::Vec3F getEye() const noexcept
-    {
-        return vec::homogeneousToCartesian(eye);
-    }
+    [[nodiscard]] vec::Vec3F getEye() const noexcept;
 
-    [[nodiscard]] inline vec::Vec3F getTarget() const noexcept
-    {
-        return vec::homogeneousToCartesian(target);
-    }
+    [[nodiscard]] vec::Vec3F getTarget() const noexcept;
 
 private:
     vec::Vec4F eye;

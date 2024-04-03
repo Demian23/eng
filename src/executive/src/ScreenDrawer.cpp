@@ -1,7 +1,7 @@
 #include "ScreenDrawer.h"
 
 enum class ScreenDrawer::Focused { Target, Camera };
-enum class ScreenDrawer::DrawStyle { Mesh, Filled };
+enum class ScreenDrawer::DrawStyle { Mesh, FacingRatio, LambertRule };
 
 ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
                            eng::ent::Camera camera,
@@ -25,12 +25,36 @@ void ScreenDrawer::draw()
         screenArray[static_cast<uint32_t>(y) * xSize +
                     static_cast<uint32_t>(x)] = color;
     };
+    auto faceRatioInserter = [=, this, xSize = static_cast<uint32_t>(w())](
+                                 long long x, long long y,
+                                 eng::floating normalProduct) {
+        RGB newColor = {
+            static_cast<uint8_t>(normalProduct *
+                                 static_cast<eng::floating>(color.r)),
+            static_cast<uint8_t>(normalProduct *
+                                 static_cast<eng::floating>(color.g)),
+            static_cast<uint8_t>(normalProduct *
+                                 static_cast<eng::floating>(color.b))};
+        screenArray[static_cast<uint32_t>(y) * xSize +
+                    static_cast<uint32_t>(x)] = newColor;
+    };
+    auto lambertColorInserter =
+        [=, this, xSize = static_cast<uint32_t>(w())](long long x, long long y,
+                                                      eng::vec::Vec3F color) {
+            screenArray[static_cast<uint32_t>(y) * xSize +
+                        static_cast<uint32_t>(x)] = {
+                static_cast<uint8_t>(color[0]), static_cast<uint8_t>(color[2]),
+                static_cast<uint8_t>(color[2])};
+        };
     switch (currentStyle) {
     case DrawStyle::Mesh:
         _pipe.drawMesh(0, w(), 0, h(), colorInserter);
         break;
-    case DrawStyle::Filled:
-        _pipe.drawFilled(0, w(), 0, h(), colorInserter);
+    case DrawStyle::FacingRatio:
+        _pipe.facingRatio(0, w(), 0, h(), faceRatioInserter);
+        break;
+    case DrawStyle::LambertRule:
+        _pipe.rasterWithLambertRule(0, w(), 0, h(), lambertColorInserter);
         break;
     }
     fl_draw_image(screenArray.data(), 0, 0, w(), h(), 3);
@@ -79,8 +103,17 @@ int ScreenDrawer::handle(int event)
     case FL_KEYBOARD:
         switch (Fl::event_key()) {
         case DrawingStyle:
-            currentStyle = currentStyle == DrawStyle::Mesh ? DrawStyle::Filled
-                                                           : DrawStyle::Mesh;
+            switch (currentStyle) {
+            case DrawStyle::Mesh:
+                currentStyle = DrawStyle::FacingRatio;
+                break;
+            case DrawStyle::FacingRatio:
+                currentStyle = DrawStyle::LambertRule;
+                break;
+            case DrawStyle::LambertRule:
+                currentStyle = DrawStyle::Mesh;
+                break;
+            }
             break;
         case ChangeFocusToCamera:
             currentFocus = Focused::Camera;
