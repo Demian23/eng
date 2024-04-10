@@ -53,152 +53,49 @@ public:
             });
     }
 
-    template <typename Out>
-    void rasterWithLambertRule(int minX, int maxX, int minY, int maxY, Out out)
+
+    using vci = std::vector<Vertex>::const_iterator;
+    template<std::invocable<uint32_t, uint32_t, vec::Vec3F> Out, std::invocable<uint32_t, uint32_t, floating, floating, floating, Triangle, Out> Shader>
+    void rasterize(int minX, int maxX, int minY, int maxY, Shader&& shader, Out&& out)
     {
-        auto verticesCopy = applyVertexTransformations(minX, maxX, minY, maxY);
-        auto normalsCopy = applyNormalTransformations();
         std::fill(_zBuffer.begin(), _zBuffer.end(), 1);
-        auto vertices = verticesCopy.cbegin();
-        std::for_each(
-            _model.trianglesBegin(), _model.trianglesEnd(),
-            [=, l = light, cameraEye = _camera.getEye(),
-             zBufferIter = _zBuffer.begin(), zBufferSize = _zBuffer.size(),
-             xSize = _xSize,
-             albedo = _model.getAlbedo()](auto &&polygon) mutable {
-                auto a =
-                    (vertices + polygon[0].vertexOffset)->template trim<3>();
-                auto b =
-                    (vertices + polygon[1].vertexOffset)->template trim<3>();
-                auto c =
-                    (vertices + polygon[2].vertexOffset)->template trim<3>();
-
-                auto triangleNormal = vec::cross(c - a, b - a);
-                auto eyeDirection = a - cameraEye;
-                auto normalProduct = eyeDirection * triangleNormal;
-
-                if (normalProduct >= 0) {
-                    auto zBufferChecker =
-                        [=, azInverse = 1 / static_cast<long double>((a[2])),
-                         bzInverse = 1 / static_cast<long double>(b[2]),
-                         czInverse = 1 / static_cast<long double>(c[2]),
-                         aNormal =
-                             *(normalsCopy.begin() + polygon[0].normalOffset),
-                         bNormal =
-                             *(normalsCopy.begin() + polygon[1].normalOffset),
-                         cNormal =
-                             *(normalsCopy.begin() + polygon[2].normalOffset)](
-                            uint32_t x, uint32_t y, floating u, floating v,
-                            floating w) mutable {
-                            long double z =
-                                1 / (azInverse * static_cast<long double>(u) +
-                                     bzInverse * static_cast<long double>(v) +
-                                     czInverse * static_cast<long double>(w));
-                            auto point = zBufferIter + y * xSize + x;
-                            if (y * xSize + x < zBufferSize && z < *point) {
-
-                                Normal normal =
-                                    Normal{
-                                        aNormal[0] * u + bNormal[0] * v +
-                                            cNormal[0] * w,
-                                        aNormal[1] * v + bNormal[1] * v +
-                                            cNormal[1] * v,
-                                        aNormal[2] * w + bNormal[2] * w +
-                                            cNormal[2] * w,
-                                    }
-                                        .normalize();
-                                auto product = normal * l.direction.trim<3>();
-                                product = std::max(0.f, product);
-                                auto resultColor = albedo;
-                                resultColor = {resultColor[0] * l.color[0] *
-                                                   product * l.intensity,
-                                               resultColor[1] * l.color[1] *
-                                                   product * l.intensity,
-                                               resultColor[2] * l.color[2] *
-                                                   product * l.intensity};
-                                out(x, y, resultColor);
-                                *point = z;
-                            }
-                        };
-
-                    eng::rast::
-                        generateBarycentricCoordinatesForEachPointInTriangle(
-                            {a[0], a[1]}, {b[0], b[1]}, {c[0], c[1]},
-                            zBufferChecker);
-                }
-            });
+        auto verticesCopy = applyVertexTransformations(minX, maxX, minY, maxY);
+        auto zBufferCheck = [zIter = _zBuffer.begin(), xSize = _xSize, zSize = _zBuffer.size()](uint32_t x, uint32_t y, long double z){
+            auto index = y * xSize + x;
+            auto point = zIter + index;
+            auto res = index < zSize && z < *point;
+            if(res)
+                *point = z;
+            return res;
+        };
+        std::for_each(_model.trianglesBegin(), _model.trianglesEnd(), [zBuffer = std::move(zBufferCheck), svIt = _model.verticesBegin(), cvIt = verticesCopy.cbegin(), mMatrix = _model.getModelMatrix(), cEye = _camera.getEye(), s = std::forward<Shader>(shader), o = std::forward<Out>(out)](const Triangle &triangle){
+            auto aInWorldSpace = (mMatrix *  *(svIt + triangle[0].vertexOffset)).trim<3>();
+            auto bInWorldSpace = (mMatrix *  *(svIt + triangle[1].vertexOffset)).trim<3>();
+            auto cInWorldSpace = (mMatrix *  *(svIt + triangle[2].vertexOffset)).trim<3>();
+            auto tNormal = vec::cross(cInWorldSpace - aInWorldSpace, bInWorldSpace - aInWorldSpace);
+            auto eyeDirection = aInWorldSpace - cEye;
+            auto normalDotEye = eyeDirection * tNormal;
+            if(normalDotEye >= 0){
+                auto a = (cvIt + triangle[0].vertexOffset)->trim<3>();
+                auto b = (cvIt + triangle[1].vertexOffset)->trim<3>();
+                auto c = (cvIt + triangle[2].vertexOffset)->trim<3>();
+                rast::generatePointsIfZ(a, b, c, zBuffer, [=](uint32_t x, uint32_t y, floating u, floating v, floating w){std::invoke(s, x, y, u, v, w, triangle, o);});
+            }
+        });
     }
 
-    // with zBuffer check and back-face culling
-    template <typename Out>
-    void facingRatio(int minX, int maxX, int minY, int maxY, Out out)
-    {
-        auto verticesCopy = applyVertexTransformations(minX, maxX, minY, maxY);
-        auto normals = _model.normalsBegin();
-        std::fill(_zBuffer.begin(), _zBuffer.end(), 1);
-        auto vertices = verticesCopy.cbegin();
-        std::for_each(
-            _model.trianglesBegin(), _model.trianglesEnd(),
-            [=, l = light, cameraEye = _camera.getEye(),
-             zBufferIter = _zBuffer.begin(), zBufferSize = _zBuffer.size(),
-             xSize = _xSize,
-             albedo = _model.getAlbedo()](auto &&polygon) mutable {
-                auto a =
-                    (vertices + polygon[0].vertexOffset)->template trim<3>();
-                auto b =
-                    (vertices + polygon[1].vertexOffset)->template trim<3>();
-                auto c =
-                    (vertices + polygon[2].vertexOffset)->template trim<3>();
-
-                auto triangleNormal = vec::cross(c - a, b - a);
-                auto eyeDirection = a - cameraEye;
-                auto normalProduct = eyeDirection * triangleNormal;
-
-                if (normalProduct >= 0) {
-                    auto zBufferChecker =
-                        [=, azInverse = 1 / static_cast<long double>((a[2])),
-                         bzInverse = 1 / static_cast<long double>(b[2]),
-                         czInverse = 1 / static_cast<long double>(c[2]),
-                         aNormal = *(normals + polygon[0].normalOffset),
-                         bNormal = *(normals + polygon[1].normalOffset),
-                         cNormal = *(normals + polygon[2].normalOffset)](
-                            uint32_t x, uint32_t y, floating u, floating v,
-                            floating w) mutable {
-                            long double z =
-                                1 / (azInverse * static_cast<long double>(u) +
-                                     bzInverse * static_cast<long double>(v) +
-                                     czInverse * static_cast<long double>(w));
-                            auto point = zBufferIter + y * xSize + x;
-                            if (y * xSize + x < zBufferSize && z < *point) {
-                                Normal normal =
-                                    Normal{
-                                        aNormal[0] * u + bNormal[0] * v +
-                                            cNormal[0] * w,
-                                        aNormal[1] * v + bNormal[1] * v +
-                                            cNormal[1] * v,
-                                        aNormal[2] * w + bNormal[2] * w +
-                                            cNormal[2] * w,
-                                    }
-                                        .normalize();
-                                auto pointToEye =
-                                    (vec::Vec3F{static_cast<floating>(x),
-                                                static_cast<floating>(y),
-                                                static_cast<floating>(z)} -
-                                     cameraEye)
-                                        .normalize();
-                                auto product = (normal * pointToEye);
-                                floating facingRatio = std::max(0.f, product);
-                                out(x, y, facingRatio);
-                                *point = z;
-                            }
-                        };
-
-                    eng::rast::
-                        generateBarycentricCoordinatesForEachPointInTriangle(
-                            {a[0], a[1]}, {b[0], b[1]}, {c[0], c[1]},
-                            zBufferChecker);
-                }
-            });
+    template<std::invocable<uint32_t, uint32_t, vec::Vec3F> Out>
+    void flatShadingAndLambertColoring(uint32_t x, uint32_t y, [[maybe_unused]] floating u, [[maybe_unused]] floating v, [[maybe_unused]] floating w, Triangle triangle, Out&& out){
+        auto it = _model.verticesBegin();
+        auto mMatrix = _model.getModelMatrix();
+        auto aInWorldSpace = (mMatrix *  *(it + triangle[0].vertexOffset)).trim<3>();
+        auto bInWorldSpace = (mMatrix *  *(it+ triangle[1].vertexOffset)).trim<3>();
+        auto cInWorldSpace = (mMatrix *  *(it + triangle[2].vertexOffset)).trim<3>();
+        auto tNormal = vec::cross(cInWorldSpace - aInWorldSpace, bInWorldSpace - aInWorldSpace).normalize();
+        auto product = std::max(0.f, tNormal * -(light.direction.trim<3>()));
+        auto lightIntensity = product * light.intensity;
+        vec::Vec3F color {light.color[0] * lightIntensity, light.color[1] * lightIntensity, light.color[2] * lightIntensity};
+        out(x, y, color);
     }
 
 private:

@@ -53,6 +53,13 @@ public:
             a[i] /= value;
         return a;
     }
+    DimensionalVector<dimensions, Component> &operator-()
+    {
+        auto &a = *this;
+        for (unsigned i = 0; i < dimensions; i++)
+            a[i] = -a[i];
+        return a;
+    }
 
     template <size_t newSize>
     constexpr DimensionalVector<newSize, Component> trim() const noexcept

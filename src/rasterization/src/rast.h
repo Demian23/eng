@@ -24,16 +24,21 @@ barycentricCoordinates(eng::vec::Vec2I p, Triangle triangle)
             wB / triangleSquare2x, wC / triangleSquare2x};
 }
 
-template <typename Callback>
-void generateBarycentricCoordinatesForEachPointInTriangle(eng::vec::Vec2F a,
-                                                          eng::vec::Vec2F b,
-                                                          eng::vec::Vec2F c,
-                                                          Callback out)
+template <typename Callback, typename ZCheck>
+void generatePointsIfZ(eng::vec::Vec3F a,
+                       eng::vec::Vec3F b,
+                       eng::vec::Vec3F c,
+                       ZCheck zCheck,
+                       Callback out)
 {
-    auto b_a = b - a;
-    auto c_a = c - a;
+    auto b_a = (b - a).trim<2>();
+    auto c_a = (c - a).trim<2>();
+    auto a2Dimensions = a.trim<2>();
     auto triangleSquare2x =
         static_cast<eng::floating>(std::abs(perpDot(b_a, c_a)));
+    auto azInverse = 1 / static_cast<long double>((a[2]));
+    auto bzInverse = 1 / static_cast<long double>(b[2]);
+    auto czInverse = 1 / static_cast<long double>(c[2]);
     auto denominator = 1 / triangleSquare2x;
     auto xMin = static_cast<uint32_t>(std::floor(std::min({a[0], b[0], c[0]})));
     auto yMin = static_cast<uint32_t>(std::floor(std::min({a[1], b[1], c[1]})));
@@ -43,11 +48,17 @@ void generateBarycentricCoordinatesForEachPointInTriangle(eng::vec::Vec2F a,
         for (auto x = xMin; x <= xMax; x++) {
             auto p_a = eng::vec::Vec2F{static_cast<eng::floating>(x),
                                        static_cast<eng::floating>(y)} -
-                       a;
+                       a2Dimensions;
             auto v = std::abs(perpDot(p_a, c_a)) * denominator;
             auto w = std::abs(perpDot(p_a, b_a)) * denominator;
-            if (v >= 0 && w >= 0 && v + w <= static_cast<decltype(v)>(1)) {
-                out(x, y, 1 - w - v, v, w);
+            auto u = 1 - w - v;
+            if (v >= 0 && w >= 0 && u >= 0) {
+                long double z =
+                    1 / (azInverse * static_cast<long double>(u) +
+                         bzInverse * static_cast<long double>(v) +
+                         czInverse * static_cast<long double>(w));
+                if(zCheck(x, y, z))
+                    out(x, y, u, v, w);
             }
         }
     }
