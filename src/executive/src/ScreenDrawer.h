@@ -26,6 +26,7 @@ protected:
     eng::ent::Camera _camera;
     eng::ent::CameraProjection _projection;
     eng::pipe::GraphicsPipeline _pipe;
+    eng::ent::DistantLight _light;
     RGBArray screenArray;
     enum class Focused;
     enum class DrawStyle;

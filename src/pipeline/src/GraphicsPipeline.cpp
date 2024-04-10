@@ -6,9 +6,8 @@ namespace eng::pipe {
 GraphicsPipeline::GraphicsPipeline(ent::Model &model, ent::Camera &camera,
                                    ent::CameraProjection &projection)
     : _model(model), _camera(camera), _projection(projection), _zBuffer{},
-      light{}, _xSize{}, _projectionType{ent::ProjectionType::Perspective}
+      _xSize{}, _projectionType{ent::ProjectionType::Perspective}
 {
-    light.color = {200, 60, 200};
     _model.setAlbedo({0.18f, 0.8f, 0.6f});
 }
 [[nodiscard]] std::vector<Normal>

@@ -1,18 +1,21 @@
 #include "ScreenDrawer.h"
+#include "../../pipeline/src/FlatShaderWithLambertColoring.h"
+#include "../../pipeline/src/PhongShaderWithLambertColoring.h"
 
 enum class ScreenDrawer::Focused { Target, Camera };
-enum class ScreenDrawer::DrawStyle { Mesh, LambertRule };
+enum class ScreenDrawer::DrawStyle { Mesh, LambertRule, PhongShadingWithLambert};
 
 ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
                            eng::ent::Camera camera,
                            eng::ent::CameraProjection cameraProjection)
     : Fl_Window{width, height}, _model(std::move(model)), _camera(camera),
-      _projection(cameraProjection), _pipe{_model, _camera, _projection},
+      _projection(cameraProjection), _pipe{_model, _camera, _projection}, _light{},
       screenArray{static_cast<uint64_t>(width * height)},
       currentFocus{Focused::Target}, currentStyle{DrawStyle::Mesh}
 {
     _pipe.setZBufferSize(static_cast<uint32_t>(width * height),
                          static_cast<uint32_t>(w()));
+    _light.color = {200, 60, 200};
 }
 
 void ScreenDrawer::draw()
@@ -37,9 +40,26 @@ void ScreenDrawer::draw()
     case DrawStyle::Mesh:
         _pipe.drawMesh(0, w(), 0, h(), colorInserter);
         break;
-    case DrawStyle::LambertRule:
-        _pipe.rasterize(0, w(), 0, h(), [=, this](uint32_t x, uint32_t y, eng::floating u,  eng::floating v,  eng::floating w, eng::Triangle triangle, decltype(lambertColorInserter) out){_pipe.flatShadingAndLambertColoring(x, y, u, v, w, triangle, out);}, lambertColorInserter);
+    case DrawStyle::LambertRule: {
+        eng::pipe::FlatShaderWithLambertColoring shader{
+            _model.getModelMatrix(), _light, lambertColorInserter,
+            _model.verticesBegin()};
+        _pipe.rasterize(0, w(), 0, h(), shader);
         break;
+    }
+    case DrawStyle::PhongShadingWithLambert:
+    {
+        std::vector<eng::Normal> normalsCopy{_model.normalsBegin(), _model.normalsEnd()};
+        std::transform(
+            normalsCopy.begin(), normalsCopy.end(), normalsCopy.begin(),
+            [modelMatrix = _model.getModelMatrix()](eng::vec::Vec3F normal) {
+              return (modelMatrix * eng::vec::Vec4F{normal[0], normal[1], normal[2], 0})
+                  .trim<3>();
+            });
+        eng::pipe::PhongShaderWithLambertColoring shader{_light, lambertColorInserter, normalsCopy.begin()};
+        _pipe.rasterize(0, w(), 0, h(), shader);
+        break;
+    }
     }
     fl_draw_image(screenArray.data(), 0, 0, w(), h(), 3);
 }
@@ -92,6 +112,9 @@ int ScreenDrawer::handle(int event)
                 currentStyle = DrawStyle::LambertRule;
                 break;
             case DrawStyle::LambertRule:
+                currentStyle = DrawStyle::PhongShadingWithLambert;
+                break;
+            case DrawStyle::PhongShadingWithLambert:
                 currentStyle = DrawStyle::Mesh;
                 break;
             }
