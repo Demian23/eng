@@ -35,6 +35,9 @@ public:
         return rgbArrayRep[0];
     }
 
+    inline auto begin() { return rgbArrayRep.begin(); }
+    inline auto end() { return rgbArrayRep.end(); }
+
     inline size_t size() const noexcept { return rgbArrayRep.size(); }
 
 private:

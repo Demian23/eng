@@ -3,14 +3,19 @@
 #include "../../pipeline/src/PhongShaderWithLambertColoring.h"
 
 enum class ScreenDrawer::Focused { Target, Camera };
-enum class ScreenDrawer::DrawStyle { Mesh, LambertRule, PhongShadingWithLambert};
+enum class ScreenDrawer::DrawStyle {
+    Mesh,
+    LambertRule,
+    PhongShadingWithLambert,
+    ZBuffer
+};
 
 ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
                            eng::ent::Camera camera,
                            eng::ent::CameraProjection cameraProjection)
     : Fl_Window{width, height}, _model(std::move(model)), _camera(camera),
-      _projection(cameraProjection), _pipe{_model, _camera, _projection}, _light{},
-      screenArray{static_cast<uint64_t>(width * height)},
+      _projection(cameraProjection), _pipe{_model, _camera, _projection},
+      _light{}, screenArray{static_cast<uint64_t>(width * height)},
       currentFocus{Focused::Target}, currentStyle{DrawStyle::Mesh}
 {
     _pipe.setZBufferSize(static_cast<uint32_t>(width * height),
@@ -47,18 +52,39 @@ void ScreenDrawer::draw()
         _pipe.rasterize(0, w(), 0, h(), shader);
         break;
     }
-    case DrawStyle::PhongShadingWithLambert:
-    {
-        std::vector<eng::Normal> normalsCopy{_model.normalsBegin(), _model.normalsEnd()};
+    case DrawStyle::PhongShadingWithLambert: {
+        std::vector<eng::Normal> normalsCopy{_model.normalsBegin(),
+                                             _model.normalsEnd()};
+        if(normalsCopy.empty())
+            break;
         std::transform(
             normalsCopy.begin(), normalsCopy.end(), normalsCopy.begin(),
             [modelMatrix = _model.getModelMatrix()](eng::vec::Vec3F normal) {
-              return (modelMatrix * eng::vec::Vec4F{normal[0], normal[1], normal[2], 0})
-                  .trim<3>();
+                return (modelMatrix *
+                        eng::vec::Vec4F{normal[0], normal[1], normal[2], 0})
+                    .trim<3>();
             });
-        eng::pipe::PhongShaderWithLambertColoring shader{_light, lambertColorInserter, normalsCopy.begin()};
+        eng::pipe::PhongShaderWithLambertColoring shader{
+            _light, lambertColorInserter, normalsCopy.begin()};
         _pipe.rasterize(0, w(), 0, h(), shader);
         break;
+    }
+    case DrawStyle::ZBuffer: {
+        eng::pipe::FlatShaderWithLambertColoring shader{
+            _model.getModelMatrix(), _light,
+            []([[maybe_unused]]long long x,[[maybe_unused]] long long y,[[maybe_unused]] eng::vec::Vec3F color) {},
+            _model.verticesBegin()};
+        _pipe.rasterize(0, w(), 0, h(), shader);
+        std::for_each(_pipe.zBufferBegin(), _pipe.zBufferEnd(),
+                      [it = screenArray.begin()](auto z) mutable {
+                          if(z == 1)
+                          {(*it = {0xFF, 0xFF, 0xFF});}
+                          else
+                            *it = RGB{static_cast<uint8_t>(0xFF * z / 10),
+                                    static_cast<uint8_t>(0xFF * z / 10),
+                                    static_cast<uint8_t>(0xFF * z / 10)};
+                          ++it;
+                      });
     }
     }
     fl_draw_image(screenArray.data(), 0, 0, w(), h(), 3);
@@ -115,6 +141,9 @@ int ScreenDrawer::handle(int event)
                 currentStyle = DrawStyle::PhongShadingWithLambert;
                 break;
             case DrawStyle::PhongShadingWithLambert:
+                currentStyle = DrawStyle::ZBuffer;
+                break;
+            case DrawStyle::ZBuffer:
                 currentStyle = DrawStyle::Mesh;
                 break;
             }

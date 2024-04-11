@@ -33,7 +33,7 @@ public:
     {
         auto &a = *this;
         for (unsigned i = 0; i < dimensions; i++)
-            a[i] = a[i] - b[i];
+            a[i] -= b[i];
         return a;
     }
 

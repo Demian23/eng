@@ -23,17 +23,55 @@ barycentricCoordinates(eng::vec::Vec2I p, Triangle triangle)
     return {(triangleSquare2x - wB - wC) / triangleSquare2x,
             wB / triangleSquare2x, wC / triangleSquare2x};
 }
-
+// #define NEW_RAST_IMPL
 template <typename Callback, typename ZCheck>
-void generatePointsIfZ(eng::vec::Vec3F a,
-                       eng::vec::Vec3F b,
-                       eng::vec::Vec3F c,
-                       ZCheck zCheck,
-                       Callback out)
+void generatePointsIfZ(eng::vec::Vec3F a, eng::vec::Vec3F b, eng::vec::Vec3F c,
+                       ZCheck zCheck, Callback out)
 {
+
+#ifdef NEW_RAST_IMPL
     auto b_a = (b - a).trim<2>();
     auto c_a = (c - a).trim<2>();
-    auto a2Dimensions = a.trim<2>();
+    auto a_c = (a - c).trim<2>();
+    auto c_b = (c - b).trim<2>();
+    auto b2= b.trim<2>();
+    auto c2= c.trim<2>();
+    eng::vec::numeric auto triangleSquare2x = perpDot(c_a, b_a);
+    auto azInverse = 1 / static_cast<long double>((a[2]));
+    auto bzInverse = 1 / static_cast<long double>(b[2]);
+    auto czInverse = 1 / static_cast<long double>(c[2]);
+    eng::vec::numeric auto denominator = 1 / triangleSquare2x;
+    auto xMin = static_cast<uint32_t>(std::floor(std::min({a[0], b[0], c[0]})));
+    auto yMin = static_cast<uint32_t>(std::floor(std::min({a[1], b[1], c[1]})));
+    auto xMax = static_cast<uint32_t>(std::floor(std::max({a[0], b[0], c[0]})));
+    auto yMax = static_cast<uint32_t>(std::floor(std::max({a[1], b[1], c[1]})));
+    for (auto y = yMin; y <= yMax; y++) {
+        for (auto x = xMin; x <= xMax; x++) {
+            auto p = eng::vec::Vec2F{static_cast<eng::floating>(x) + 0.5f,
+                                     static_cast<eng::floating>(y) + 0.5f};
+            auto p_b = p - b2;
+            auto p_c = p - c2;
+
+            eng::vec::numeric auto u = perpDot(p_b, c_b);
+            eng::vec::numeric auto v = perpDot(p_c, a_c);
+            eng::vec::numeric auto w = triangleSquare2x - u - v;
+            if (v >= 0 && w >= 0 && u >= 0) {
+                v *= denominator;
+                w *= denominator;
+                u *= denominator;
+                long double z =
+                    1 / (azInverse * static_cast<long double>(u) +
+                         bzInverse * static_cast<long double>(v) +
+                         czInverse * static_cast<long double>(w));
+                if(zCheck(x, y, z))
+                    out(x, y, u, v, w);
+            }
+        }
+    }
+#else
+    auto b_a = (b - a).trim<2>();
+    auto c_a = (c - a).trim<2>();
+    auto a2 = a.trim<2>();
     auto triangleSquare2x =
         static_cast<eng::floating>(std::abs(perpDot(b_a, c_a)));
     auto azInverse = 1 / static_cast<long double>((a[2]));
@@ -46,9 +84,9 @@ void generatePointsIfZ(eng::vec::Vec3F a,
     auto yMax = static_cast<uint32_t>(std::floor(std::max({a[1], b[1], c[1]})));
     for (auto y = yMin; y <= yMax; y++) {
         for (auto x = xMin; x <= xMax; x++) {
-            auto p_a = eng::vec::Vec2F{static_cast<eng::floating>(x),
-                                       static_cast<eng::floating>(y)} -
-                       a2Dimensions;
+            auto p = eng::vec::Vec2F{static_cast<eng::floating>(x) + 0.5f,
+                                       static_cast<eng::floating>(y) + 0.5f};
+            auto p_a = p - a2;
             auto v = std::abs(perpDot(p_a, c_a)) * denominator;
             auto w = std::abs(perpDot(p_a, b_a)) * denominator;
             auto u = 1 - w - v;
@@ -62,6 +100,7 @@ void generatePointsIfZ(eng::vec::Vec3F a,
             }
         }
     }
+#endif
 }
 
 template <typename OutIter> void trianglePoints(Triangle triangle, OutIter out)

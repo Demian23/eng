@@ -10,8 +10,11 @@
 namespace eng::pipe {
 
 template <typename T>
-concept Shader = requires(T&& shader, uint32_t x, uint32_t y, floating u, floating v, floating w, Triangle triangle){
-    {shader(x, y, u, v, w, triangle)} -> std::same_as<void>;
+concept Shader = requires(T &&shader, uint32_t x, uint32_t y, floating u,
+                          floating v, floating w, Triangle triangle) {
+    {
+        shader(x, y, u, v, w, triangle)
+    } -> std::same_as<void>;
 };
 
 class GraphicsPipeline final {
@@ -58,37 +61,52 @@ public:
             });
     }
 
-
-    template<Shader ShaderCallable>
-    void rasterize(int minX, int maxX, int minY, int maxY, ShaderCallable&& shader)
+    template <Shader ShaderCallable>
+    void rasterize(int minX, int maxX, int minY, int maxY,
+                   ShaderCallable &&shader)
     {
         std::fill(_zBuffer.begin(), _zBuffer.end(), 1);
         auto verticesCopy = applyVertexTransformations(minX, maxX, minY, maxY);
-        auto normalsCopy = applyNormalTransformations();
-        auto zBufferCheck = [zIter = _zBuffer.begin(), xSize = _xSize, zSize = _zBuffer.size()](uint32_t x, uint32_t y, long double z){
+        auto zBufferCheck = [zIter = _zBuffer.begin(), xSize = _xSize,
+                             zSize = _zBuffer.size()](uint32_t x, uint32_t y,
+                                                      long double z) {
             auto index = y * xSize + x;
             auto point = zIter + index;
             auto res = index < zSize && z < *point;
-            if(res)
+            if (res)
                 *point = z;
             return res;
         };
-        std::for_each(_model.trianglesBegin(), _model.trianglesEnd(), [=, zBuffer = std::move(zBufferCheck), svIt = _model.verticesBegin(), cvIt = verticesCopy.cbegin(), cnIt = normalsCopy.cbegin(), mMatrix = _model.getModelMatrix(), cEye = _camera.getEye()](const Triangle &triangle){
-            auto aInWorldSpace = (mMatrix *  *(svIt + triangle[0].vertexOffset)).trim<3>();
-            auto bInWorldSpace = (mMatrix *  *(svIt + triangle[1].vertexOffset)).trim<3>();
-            auto cInWorldSpace = (mMatrix *  *(svIt + triangle[2].vertexOffset)).trim<3>();
-            auto tNormal = vec::cross(cInWorldSpace - aInWorldSpace, bInWorldSpace - aInWorldSpace);
-            auto eyeDirection = aInWorldSpace - cEye;
-            auto normalDotEye = eyeDirection * tNormal;
-            if(normalDotEye >= 0){
-                auto a = (cvIt + triangle[0].vertexOffset)->trim<3>();
-                auto b = (cvIt + triangle[1].vertexOffset)->trim<3>();
-                auto c = (cvIt + triangle[2].vertexOffset)->trim<3>();
-                rast::generatePointsIfZ(a, b, c, zBuffer, [=](uint32_t x, uint32_t y, floating u, floating v, floating w){shader(x, y, u, v, w, triangle);});
-            }
-        });
+        std::for_each(
+            _model.trianglesBegin(), _model.trianglesEnd(),
+            [=, zBuffer = std::move(zBufferCheck),
+             svIt = _model.verticesBegin(), cvIt = verticesCopy.cbegin(),
+             mMatrix = _model.getModelMatrix(),
+             cEye = _camera.getEye()](const Triangle &triangle) {
+                auto aInWorldSpace =
+                    (mMatrix * *(svIt + triangle[0].vertexOffset)).trim<3>();
+                auto bInWorldSpace =
+                    (mMatrix * *(svIt + triangle[1].vertexOffset)).trim<3>();
+                auto cInWorldSpace =
+                    (mMatrix * *(svIt + triangle[2].vertexOffset)).trim<3>();
+                auto tNormal = vec::cross(cInWorldSpace - aInWorldSpace,
+                                          bInWorldSpace - aInWorldSpace);
+                auto eyeDirection = aInWorldSpace - cEye;
+                auto normalDotEye = eyeDirection * tNormal;
+                if (normalDotEye >= 0) {
+                    auto a = (cvIt + triangle[0].vertexOffset)->trim<3>();
+                    auto b = (cvIt + triangle[1].vertexOffset)->trim<3>();
+                    auto c = (cvIt + triangle[2].vertexOffset)->trim<3>();
+                    rast::generatePointsIfZ(
+                        a, b, c, zBuffer,
+                        [=](uint32_t x, uint32_t y, floating u, floating v,
+                            floating w) { shader(x, y, u, v, w, triangle); });
+                }
+            });
     }
 
+    [[nodiscard]] inline auto zBufferBegin() const noexcept { return _zBuffer.cbegin(); }
+    [[nodiscard]] inline auto zBufferEnd() const noexcept { return _zBuffer.cend(); }
 
 private:
     ent::Model &_model;
