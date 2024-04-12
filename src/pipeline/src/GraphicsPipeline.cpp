@@ -10,19 +10,6 @@ GraphicsPipeline::GraphicsPipeline(ent::Model &model, ent::Camera &camera,
 {
     _model.setAlbedo({0.18f, 0.8f, 0.6f});
 }
-[[nodiscard]] std::vector<Normal>
-GraphicsPipeline::applyNormalTransformations() const noexcept
-{
-    std::vector<Normal> normalsCopy{_model.normalsBegin(), _model.normalsEnd()};
-    std::transform(normalsCopy.begin(), normalsCopy.end(), normalsCopy.begin(),
-                   [matrix = _model.getModelMatrix()](vec::Vec3F normal) {
-                       return (matrix *
-                               vec::Vec4F{normal[0], normal[1], normal[2], 0})
-                           .trim<3>();
-                   });
-    return normalsCopy;
-}
-
 [[nodiscard]] std::vector<Vertex>
 GraphicsPipeline::applyVertexTransformations(int minX, int maxX, int minY,
                                              int maxY) const noexcept

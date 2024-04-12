@@ -25,4 +25,5 @@ struct PolygonIndexes {
 using Polygon = std::vector<PolygonComponent>; // or pointer
 using Triangle = std::array<PolygonComponent, 3>;
 
+
 } // namespace eng

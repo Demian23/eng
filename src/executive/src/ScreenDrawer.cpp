@@ -1,13 +1,11 @@
 #include "ScreenDrawer.h"
-#include "../../pipeline/src/FlatShaderWithLambertColoring.h"
-#include "../../pipeline/src/PhongShaderWithLambertColoring.h"
+#include "../../pipeline/src/Shaders.h"
 
 enum class ScreenDrawer::Focused { Target, Camera };
 enum class ScreenDrawer::DrawStyle {
     Mesh,
     LambertRule,
     PhongShadingWithLambert,
-    ZBuffer
 };
 
 ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
@@ -28,26 +26,22 @@ void ScreenDrawer::draw()
     screenArray.fill({0, 0, 0});
     RGB color =
         currentFocus == Focused::Camera ? RGB{0, 0, 255} : RGB{0, 255, 0};
-    auto colorInserter = [=, this, xSize = static_cast<uint32_t>(w())](
-                             long long x, long long y) {
-        screenArray[static_cast<uint32_t>(y) * xSize +
-                    static_cast<uint32_t>(x)] = color;
-    };
-    auto lambertColorInserter =
+    auto colorInserter =
         [=, this, xSize = static_cast<uint32_t>(w())](long long x, long long y,
                                                       eng::vec::Vec3F color) {
             screenArray[static_cast<uint32_t>(y) * xSize +
                         static_cast<uint32_t>(x)] = {
-                static_cast<uint8_t>(color[0]), static_cast<uint8_t>(color[2]),
+                static_cast<uint8_t>(color[0]), static_cast<uint8_t>(color[1]),
                 static_cast<uint8_t>(color[2])};
         };
+    auto constantColorInserter = [inserter = colorInserter, colorAsFloat = eng::vec::Vec3F{static_cast<eng::floating>(color.r), static_cast<eng::floating>(color.g), static_cast<eng::floating>(color.b)}](long long x, long long y){inserter(x, y, colorAsFloat);};
     switch (currentStyle) {
     case DrawStyle::Mesh:
-        _pipe.drawMesh(0, w(), 0, h(), colorInserter);
+        _pipe.drawMesh(0, w(), 0, h(), constantColorInserter);
         break;
     case DrawStyle::LambertRule: {
         eng::pipe::FlatShaderWithLambertColoring shader{
-            _model.getModelMatrix(), _light, lambertColorInserter,
+            _model.getModelMatrix(), _light, colorInserter,
             _model.verticesBegin()};
         _pipe.rasterize(0, w(), 0, h(), shader);
         break;
@@ -65,26 +59,9 @@ void ScreenDrawer::draw()
                     .trim<3>();
             });
         eng::pipe::PhongShaderWithLambertColoring shader{
-            _light, lambertColorInserter, normalsCopy.begin()};
+            _light, colorInserter, normalsCopy.begin()};
         _pipe.rasterize(0, w(), 0, h(), shader);
         break;
-    }
-    case DrawStyle::ZBuffer: {
-        eng::pipe::FlatShaderWithLambertColoring shader{
-            _model.getModelMatrix(), _light,
-            []([[maybe_unused]]long long x,[[maybe_unused]] long long y,[[maybe_unused]] eng::vec::Vec3F color) {},
-            _model.verticesBegin()};
-        _pipe.rasterize(0, w(), 0, h(), shader);
-        std::for_each(_pipe.zBufferBegin(), _pipe.zBufferEnd(),
-                      [it = screenArray.begin()](auto z) mutable {
-                          if(z == 1)
-                          {(*it = {0xFF, 0xFF, 0xFF});}
-                          else
-                            *it = RGB{static_cast<uint8_t>(0xFF * z / 10),
-                                    static_cast<uint8_t>(0xFF * z / 10),
-                                    static_cast<uint8_t>(0xFF * z / 10)};
-                          ++it;
-                      });
     }
     }
     fl_draw_image(screenArray.data(), 0, 0, w(), h(), 3);
@@ -141,9 +118,6 @@ int ScreenDrawer::handle(int event)
                 currentStyle = DrawStyle::PhongShadingWithLambert;
                 break;
             case DrawStyle::PhongShadingWithLambert:
-                currentStyle = DrawStyle::ZBuffer;
-                break;
-            case DrawStyle::ZBuffer:
                 currentStyle = DrawStyle::Mesh;
                 break;
             }

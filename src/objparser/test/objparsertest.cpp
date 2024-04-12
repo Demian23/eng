@@ -62,29 +62,6 @@ TEST_CASE("Parsing texture coord")
     }
 }
 
-TEST_CASE("Parse stream")
-{
-    std::vector<Vertex> vertices;
-    std::vector<PolygonVertexOnly> polygons;
-
-    std::stringstream stream{"# comment\nv  -1.3143 15.0686 -1.6458\nvn  "
-                             "-0.6011 0.4519 0.6591\nf 1//1 -1//-1 1//-1"};
-
-    Vertex expectedVertex{-1.3143f, 15.0686f, -1.6458f, 1.0f};
-
-    parseOnlyVerticesAndPolygons(stream, vertices, polygons);
-
-    CHECK(vertices.size() == 1);
-    CHECK(polygons.size() == 1);
-
-    CHECK(vertices[0] == expectedVertex);
-    for (auto &&polygon : polygons) {
-        for (auto &&vertex : polygon) {
-            CHECK(vertex == expectedVertex);
-        }
-    }
-}
-
 TEST_CASE("Parse stream completely")
 {
     std::vector<Vertex> vertices;
@@ -107,6 +84,7 @@ TEST_CASE("Parse stream completely")
     REQUIRE(normals == expectedNormals);
     REQUIRE(textures == expectedTextures);
 
+
     for (const auto &polygon : polygons) {
         for (const auto &component : polygon) {
             REQUIRE(component.vertexOffset == 0);
@@ -114,41 +92,6 @@ TEST_CASE("Parse stream completely")
             REQUIRE(component.textureCoordinatesOffset == 0);
         }
     }
-}
-
-TEST_CASE("Parse file")
-{
-    std::ifstream file(parseFileTest_source);
-    REQUIRE(file.good());
-
-    std::vector<Vertex> vertices;
-    std::vector<QuadVertexOnly> polygons;
-
-    auto start = std::chrono::high_resolution_clock::now();
-    parseOnlyVerticesAndPolygons(file, vertices, polygons);
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-
-    CHECK(vertices.size() == 24461);
-    CHECK(polygons.size() == 24459);
-
-    std::vector<Vertex> expectedComponents{
-        vertices[0],
-        vertices[1],
-        vertices[2],
-        vertices[3],
-    };
-
-    std::cout << vertices.size() * sizeof(Vertex) << ' '
-              << polygons.size() * 4 * sizeof(PolygonComponent) << '\n'
-              << "Duration(milliseconds): " << duration.count() << std::endl;
-    std::cout << "With values: " << polygons.size() * sizeof(TriangleVertexOnly)
-              << '\n';
-
-    CHECK(polygons.begin()->size() == 4);
-    CHECK(std::equal(polygons[0].begin(), polygons[0].end(),
-                     expectedComponents.begin()));
 }
 
 TEST_CASE("Parse file completely")

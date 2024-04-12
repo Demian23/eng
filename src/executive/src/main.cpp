@@ -160,9 +160,8 @@ void autoPositioningForModel(std::array<eng::floating, 6> dimensions,
     modelTransformation =
         modelTransformation *
         eng::mtr::Matrix::getMove({0, -modelHeight / 2, -modelThickness / 2});
-    projection.setZComponent(
-        modelThickness * 0.01f,
-        std::max(100.f, modelThickness * 4)); // TODO: here z buffer problem
+
+    projection.setZComponent(0.01f, std::max(modelThickness * 10, 100.f));
 
     eng::floating diagonalForCircumscribedParallelepiped =
         std::sqrt(modelWidth * modelWidth + modelHeight * modelHeight +
@@ -177,7 +176,5 @@ void autoPositioningForModel(std::array<eng::floating, 6> dimensions,
     eng::floating distanceForCamera = std::max(
         {radiusForSphere / std::sin(std::min(fovDivided, horizontalFovDivided)),
          projection.getZMin() + radiusForSphere});
-
-    // TODO: ask how fix this
     camera.reset({distanceForCamera, 0, 0}, {0, 0, 0}, {0, 1, 0});
 }

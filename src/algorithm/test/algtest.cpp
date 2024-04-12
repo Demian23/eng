@@ -189,7 +189,7 @@ TEST_CASE("Polygon triangulation")
         polygonTriangulation(triangle.begin(), triangle.end(),
                              std::back_inserter(triangles));
         std::vector<decltype(triangle)> expected{
-            {std::pair{10, 10}, {20, 0}, {0, 0}}};
+            {std::pair{0, 0}, {10, 10}, {20, 0}}};
         CHECK(triangles.size() == 1);
         CHECK(expected == triangles);
     }
@@ -199,8 +199,8 @@ TEST_CASE("Polygon triangulation")
                         std::pair{20, 0}};
         std::vector<decltype(triangle)> triangles;
         std::vector<decltype(triangle)> expected{
-            {std::pair{10, 10}, {15, 8}, {20, 0}},
-            {std::pair{10, 10}, {20, 0}, {0, 0}}};
+            {std::pair{0, 0}, {10, 10}, {15, 8}},
+            {std::pair{0, 0}, {15, 8}, {20, 0}}};
         polygonTriangulation(quad.begin(), quad.end(),
                              std::back_inserter(triangles));
         CHECK(triangles.size() == 2);
@@ -213,9 +213,9 @@ TEST_CASE("Polygon triangulation")
                             std::pair{20, 0}};
         std::vector<decltype(triangle)> triangles;
         std::vector<decltype(triangle)> expected{
-            {std::pair{10, 10}, {15, 8}, {18, 5}},
-            {std::pair{10, 10}, {18, 5}, {20, 0}},
-            {std::pair{10, 10}, {20, 0}, {0, 0}}};
+            {std::pair{0, 0}, {10, 10}, {15, 8}},
+            {std::pair{0, 0}, {15, 8}, {18, 5}},
+            {std::pair{0, 0}, {18, 5}, {20, 0}}};
         polygonTriangulation(pentagon.begin(), pentagon.end(),
                              std::back_inserter(triangles));
         CHECK(triangles.size() == 3);

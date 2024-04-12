@@ -115,20 +115,9 @@ std::array<Coord, dimensions * 2> boundingBox(Iter begin, Iter end)
 template <typename VertexIter, typename Out>
 void polygonTriangulation(VertexIter begin, VertexIter end, Out out)
 {
-    auto lastVertex = *begin;
-    begin++;
-    auto commonVertex = *begin;
-    begin++;
-    auto firstVertex = *begin;
-    begin++;
-
-    while (begin != end) {
-        *out = {commonVertex, firstVertex, *begin};
-        ++out;
-        firstVertex = *begin;
-        ++begin;
-    }
-    *out = {commonVertex, firstVertex, lastVertex};
+    auto n = end - begin;
+    for(auto i = 1; i < n - 1; i++, ++out)
+        *out = {*begin, *(begin + i), *(begin + i + 1)};
 }
 
 template <typename Out>
@@ -137,6 +126,53 @@ void drawTriangle(vec::Vec2I a, vec::Vec2I b, vec::Vec2I c, Out inserter)
     eng::alg::line(a[0], c[0], a[1], c[1], inserter);
     eng::alg::line(a[0], b[0], a[1], b[1], inserter);
     eng::alg::line(b[0], c[0], b[1], c[1], inserter);
+}
+
+
+template<typename T>
+concept ZBufferCheck = std::invocable<T, uint32_t, uint32_t, floating>;
+
+template<typename T>
+concept BCOutput = std::invocable<T, uint32_t, uint32_t, floating, floating, floating>;
+
+void barycentricCoordinates(vec::Vec3F a, vec::Vec3F b, vec::Vec3F c,
+                            ZBufferCheck auto zCheck, BCOutput auto out)
+{
+    using namespace eng::vec;
+    using std::ceil, std::min, std::max;
+
+    auto a_b= (b - a).trim<2>();
+    auto a_c= (c - a).trim<2>();
+    auto b2= b.trim<2>();
+    auto c2= c.trim<2>();
+    auto a2 = a.trim<2>();
+    numeric auto triangleSquare2x = perpDot(a_c, a_b);
+    numeric auto denominator = 1 / triangleSquare2x;
+
+    // potentially bad assumption that there is no negative coordinates
+    // TODO make it accurate or clamp and then cast
+    auto xMin = static_cast<uint32_t>((ceil(min({a[0], b[0], c[0]}))));
+    auto yMin = static_cast<uint32_t>(ceil(min({a[1], b[1], c[1]})));
+    auto xMax = static_cast<uint32_t>(ceil(max({a[0], b[0], c[0]})));
+    auto yMax = static_cast<uint32_t>(ceil(max({a[1], b[1], c[1]})));
+    for (auto y = yMin; y <= yMax; y++) {
+        for (auto x = xMin; x <= xMax; x++) {
+            auto p = Vec2F{static_cast<floating>(x), static_cast<floating>(y)};
+            auto p_c = c2 - p;
+            auto p_b= b2 - p;
+            auto p_a = a2 - p;
+
+            numeric auto u = perpDot(p_c, p_b) * denominator;
+            numeric auto v = perpDot(p_a, p_c) * denominator;
+            numeric auto w = 1 - u - v;
+            if (v >= 0 && w >= 0 && u >= 0) {
+                // TODO potentially not accurate
+                auto z = a[2] * u + b[2] * v + c[2] * w;
+                if(std::invoke(zCheck,x, y, z))
+                    std::invoke(out,x, y, u, v, w);
+            }
+        }
+    }
 }
 
 } // namespace eng::alg
