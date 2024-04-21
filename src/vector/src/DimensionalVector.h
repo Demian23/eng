@@ -53,6 +53,15 @@ public:
             a[i] /= value;
         return a;
     }
+
+    DimensionalVector<dimensions, Component> &operator*=(floating value)
+    {
+        auto &a = *this;
+        for (unsigned i = 0; i < dimensions; i++)
+            a[i] *= value;
+        return a;
+    }
+
     DimensionalVector<dimensions, Component> &operator-()
     {
         auto &a = *this;
@@ -80,6 +89,14 @@ public:
         return result;
     }
 };
+
+template <size_t dimensions, numeric Component>
+DimensionalVector<dimensions, Component> operator*(const DimensionalVector<dimensions, Component> &a,
+                   floating b)
+{
+    auto z = a;
+    return z *= b;
+}
 
 template <size_t dimensions, numeric Component>
 floating operator*(const DimensionalVector<dimensions, Component> &a,

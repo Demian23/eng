@@ -6,6 +6,7 @@ enum class ScreenDrawer::DrawStyle {
     Mesh,
     LambertRule,
     PhongShadingWithLambert,
+    PhongShadingWithPhong
 };
 
 ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
@@ -60,6 +61,30 @@ void ScreenDrawer::draw()
             });
         eng::pipe::PhongShaderWithLambertColoring shader{
             _light, colorInserter, normalsCopy.begin()};
+        _pipe.rasterize(0, w(), 0, h(), shader);
+        break;
+    }
+    case DrawStyle::PhongShadingWithPhong: {
+        std::vector<eng::Normal> normalsCopy{_model.normalsBegin(),
+                                             _model.normalsEnd()};
+        std::vector<eng::Vertex> verticesCopy{_model.verticesBegin(),
+                                             _model.verticesEnd()};
+        if(normalsCopy.empty())
+            break;
+        std::transform(
+            normalsCopy.begin(), normalsCopy.end(), normalsCopy.begin(),
+            [modelMatrix = _model.getModelMatrix()](eng::vec::Vec3F normal) {
+              return (modelMatrix *
+                      eng::vec::Vec4F{normal[0], normal[1], normal[2], 0})
+                  .trim<3>();
+            });
+        std::transform(
+            verticesCopy.begin(), verticesCopy.end(), verticesCopy.begin(),
+            [modelMatrix = _model.getModelMatrix()](eng::vec::Vec4F vertex) {
+              return modelMatrix * vertex;
+            });
+        eng::pipe:: PhongShaderWithPhongColoring shader{
+            _light, colorInserter, verticesCopy.cbegin(), normalsCopy.cbegin(), _model.getAlbedo(), 128, _camera.getEye()};
         _pipe.rasterize(0, w(), 0, h(), shader);
         break;
     }
@@ -118,6 +143,9 @@ int ScreenDrawer::handle(int event)
                 currentStyle = DrawStyle::PhongShadingWithLambert;
                 break;
             case DrawStyle::PhongShadingWithLambert:
+                currentStyle = DrawStyle::PhongShadingWithPhong;
+                break;
+            case DrawStyle::PhongShadingWithPhong:
                 currentStyle = DrawStyle::Mesh;
                 break;
             }
