@@ -11,15 +11,14 @@ enum class ScreenDrawer::DrawStyle {
 
 ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
                            eng::ent::Camera camera,
-                           eng::ent::CameraProjection cameraProjection)
+                           eng::ent::CameraProjection cameraProjection, eng::ent::DistantLight light)
     : Fl_Window{width, height}, _model(std::move(model)), _camera(camera),
       _projection(cameraProjection), _pipe{_model, _camera, _projection},
-      _light{}, screenArray{static_cast<uint64_t>(width * height)},
+      _light{light}, screenArray{static_cast<uint64_t>(width * height)},
       currentFocus{Focused::Target}, currentStyle{DrawStyle::Mesh}
 {
     _pipe.setZBufferSize(static_cast<uint32_t>(width * height),
                          static_cast<uint32_t>(w()));
-    _light.color = {200, 60, 200};
 }
 
 void ScreenDrawer::draw()

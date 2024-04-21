@@ -12,8 +12,8 @@ enum class ProjectionType { Orthographic, Perspective };
 class CameraProjection {
 public:
     CameraProjection() noexcept = default;
-    CameraProjection(floating w, floating h, floating zMin, floating zMax,
-                     floating projectionAngle) noexcept;
+    CameraProjection(floating w, floating h, floating zMin = 0.01f, floating zMax = 100.f,
+                     floating projectionAngle = 90) noexcept;
 
     void reset(floating w, floating h, floating zMin, floating zMax,
                floating projectionAngle) noexcept;

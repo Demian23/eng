@@ -2,6 +2,15 @@
 
 namespace eng::ent {
 
+void Model::reset(std::vector<Vertex> &&vertices, std::vector<Triangle> &&polygons,
+           std::vector<Normal> &&normals,
+           std::vector<TextureCoord> &&textureCoords)
+{
+    _vertices = std::move(vertices);
+    _triangles = std::move(polygons);
+    _normals = std::move(normals);
+    _textureCoords = std::move(textureCoords);
+}
 void Model::addModelTransformation(mtr::Matrix transformation) noexcept
 {
     modelMatrix = transformation * modelMatrix;

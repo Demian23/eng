@@ -4,6 +4,7 @@
 
 namespace eng::ent {
 
+
 struct DistantLight {
     vec::Vec3F color{0xFF, 0xFF, 0xFF};
     // to rotate mul on rotation matrix

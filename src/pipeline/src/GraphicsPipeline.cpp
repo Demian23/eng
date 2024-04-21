@@ -7,9 +7,8 @@ GraphicsPipeline::GraphicsPipeline(ent::Model &model, ent::Camera &camera,
                                    ent::CameraProjection &projection)
     : _model(model), _camera(camera), _projection(projection), _zBuffer{},
       _xSize{}, _projectionType{ent::ProjectionType::Perspective}
-{
-    _model.setAlbedo({0.18f, 0.8f, 0.6f});
-}
+{}
+
 [[nodiscard]] std::vector<Vertex>
 GraphicsPipeline::applyVertexTransformations(int minX, int maxX, int minY,
                                              int maxY) const noexcept

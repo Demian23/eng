@@ -92,7 +92,7 @@ void ddaLine(floating x0, floating x1, floating y0, floating y1, Out &&out)
     }
 }
 
-template <typename Iter, size_t dimensions,
+template <size_t dimensions, typename Iter,
           typename Coord = std::iterator_traits<Iter>::value_type::value_type>
 std::array<Coord, dimensions * 2> boundingBox(Iter begin, Iter end)
 {

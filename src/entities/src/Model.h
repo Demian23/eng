@@ -22,7 +22,7 @@ public:
     using normalsIteratorType = std::vector<Normal>::const_iterator;
 
     static constexpr vec::Vec3F defaultAlbedo = {0.18f, 0.18f, 0.18f};
-
+    Model():_vertices{}, _normals{}, _textureCoords{}, _triangles{}, _albedo{defaultAlbedo}, modelMatrix{mtr::Matrix::createIdentityMatrix()}{}
     Model(std::vector<Vertex> &&vertices, std::vector<Triangle> &&polygons,
           std::vector<Normal> &&normals = {},
           std::vector<TextureCoord> &&textureCoords = {},
@@ -31,6 +31,10 @@ public:
           _textureCoords(std::move(textureCoords)), _triangles(polygons),
           _albedo{albedo}, modelMatrix(mtr::Matrix::createIdentityMatrix())
     {}
+
+    void reset(std::vector<Vertex> &&vertices, std::vector<Triangle> &&polygons,
+          std::vector<Normal> &&normals,
+          std::vector<TextureCoord> &&textureCoords);
 
     void addModelTransformation(mtr::Matrix transformation) noexcept;
 
