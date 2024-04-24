@@ -64,6 +64,13 @@ public:
 
     [[nodiscard]] normalsIteratorType normalsEnd() const noexcept;
 
+    [[nodiscard]] inline auto texturesBegin() const noexcept{
+        return _textureCoords.cbegin();
+    }
+    [[nodiscard]] inline auto texturesEnd() const noexcept{
+        return _textureCoords.cend();
+    }
+
     [[nodiscard]] inline vec::Vec3F getAlbedo() const noexcept
     {
         return _albedo;

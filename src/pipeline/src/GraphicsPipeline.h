@@ -60,11 +60,10 @@ public:
     }
 
     template <Shader ShaderCallable>
-    void rasterize(int minX, int maxX, int minY, int maxY,
+    void rasterize(std::vector<Vertex>::const_iterator vc,
                    ShaderCallable &&shader)
     {
         std::fill(_zBuffer.begin(), _zBuffer.end(), 1);
-        auto verticesCopy = applyVertexTransformations(minX, maxX, minY, maxY);
         auto zBufferCheck = [zIter = _zBuffer.begin(), xSize = _xSize,
                              zSize = _zBuffer.size()](uint32_t x, uint32_t y,
                                                       floating z) {
@@ -78,7 +77,7 @@ public:
         std::for_each(
             _model.trianglesBegin(), _model.trianglesEnd(),
             [=, zBuffer = std::move(zBufferCheck),
-             svIt = _model.verticesBegin(), cvIt = verticesCopy.cbegin(),
+             svIt = _model.verticesBegin(), cvIt = vc,
              mMatrix = _model.getModelMatrix(),
              cEye = _camera.getEye()](auto &&triangle) {
                 auto aInWorldSpace =

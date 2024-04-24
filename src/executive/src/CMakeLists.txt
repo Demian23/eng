@@ -4,5 +4,5 @@ add_executable(executive main.cpp
         ScreenDrawer.cpp
 )
 
-find_library(FLTK NAME fltk)
-target_link_libraries(executive PRIVATE options warnings objparser mtr pipe FLTK)
+
+target_link_libraries(executive PRIVATE options warnings objparser mtr pipe fltk fltk_images)

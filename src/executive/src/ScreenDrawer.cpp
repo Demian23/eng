@@ -1,12 +1,15 @@
 #include "ScreenDrawer.h"
 #include "../../pipeline/src/Shaders.h"
+#include "FL/Fl_PNG_Image.H"
 
 enum class ScreenDrawer::Focused { Target, Camera };
 enum class ScreenDrawer::DrawStyle {
     Mesh,
     LambertRule,
     PhongShadingWithLambert,
-    PhongShadingWithPhong
+    PhongShadingWithPhong,
+    Diffuse,
+    Universal
 };
 
 ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
@@ -26,6 +29,8 @@ void ScreenDrawer::draw()
     screenArray.fill({0, 0, 0});
     RGB color =
         currentFocus == Focused::Camera ? RGB{0, 0, 255} : RGB{0, 255, 0};
+    auto verticesCopy = _pipe.applyVertexTransformations(0, w(), 0, h());
+    auto vcIt = verticesCopy.cbegin();
     auto colorInserter =
         [=, this, xSize = static_cast<uint32_t>(w())](long long x, long long y,
                                                       eng::vec::Vec3F color) {
@@ -43,7 +48,7 @@ void ScreenDrawer::draw()
         eng::pipe::FlatShaderWithLambertColoring shader{
             _model.getModelMatrix(), _light, colorInserter,
             _model.verticesBegin()};
-        _pipe.rasterize(0, w(), 0, h(), shader);
+        _pipe.rasterize(vcIt, shader);
         break;
     }
     case DrawStyle::PhongShadingWithLambert: {
@@ -60,16 +65,45 @@ void ScreenDrawer::draw()
             });
         eng::pipe::PhongShaderWithLambertColoring shader{
             _light, colorInserter, normalsCopy.begin()};
-        _pipe.rasterize(0, w(), 0, h(), shader);
+        _pipe.rasterize(vcIt, shader);
         break;
     }
     case DrawStyle::PhongShadingWithPhong: {
         std::vector<eng::Normal> normalsCopy{_model.normalsBegin(),
                                              _model.normalsEnd()};
-        std::vector<eng::Vertex> verticesCopy{_model.verticesBegin(),
-                                             _model.verticesEnd()};
-        if(normalsCopy.empty())
+        std::vector<eng::Vertex> vCopy{_model.verticesBegin(),
+                                              _model.verticesEnd()};
+        if (normalsCopy.empty())
             break;
+        std::transform(
+            normalsCopy.begin(), normalsCopy.end(), normalsCopy.begin(),
+            [modelMatrix = _model.getModelMatrix()](eng::vec::Vec3F normal) {
+                return (modelMatrix *
+                        eng::vec::Vec4F{normal[0], normal[1], normal[2], 0})
+                    .trim<3>();
+            });
+        std::transform(
+            vCopy.begin(), vCopy.end(), vCopy.begin(),
+            [modelMatrix = _model.getModelMatrix()](eng::vec::Vec4F vertex) {
+                return modelMatrix * vertex;
+            });
+        eng::pipe::PhongShaderWithPhongColoring shader{_light,
+                                                       colorInserter,
+                                                       vCopy.cbegin(),
+                                                       normalsCopy.cbegin(),
+                                                       _model.getAlbedo(),
+                                                       128,
+                                                       _camera.getEye()};
+        _pipe.rasterize(vcIt, shader);
+        break;
+    }
+    case DrawStyle::Diffuse: {
+        Fl_PNG_Image image{"/Users/egor/work/objfiles/Head/diffuse.png"};
+        Fl_PNG_Image specular{"/Users/egor/work/objfiles/Head/specular.png"};
+        std::vector<eng::Normal> normalsCopy{_model.normalsBegin(),
+                                             _model.normalsEnd()};
+        std::vector<eng::Vertex> vCopy{_model.verticesBegin(),
+                                       _model.verticesEnd()};
         std::transform(
             normalsCopy.begin(), normalsCopy.end(), normalsCopy.begin(),
             [modelMatrix = _model.getModelMatrix()](eng::vec::Vec3F normal) {
@@ -78,14 +112,81 @@ void ScreenDrawer::draw()
                   .trim<3>();
             });
         std::transform(
-            verticesCopy.begin(), verticesCopy.end(), verticesCopy.begin(),
+            vCopy.begin(), vCopy.end(), vCopy.begin(),
             [modelMatrix = _model.getModelMatrix()](eng::vec::Vec4F vertex) {
               return modelMatrix * vertex;
             });
-        eng::pipe:: PhongShaderWithPhongColoring shader{
-            _light, colorInserter, verticesCopy.cbegin(), normalsCopy.cbegin(), _model.getAlbedo(), 128, _camera.getEye()};
-        _pipe.rasterize(0, w(), 0, h(), shader);
+        auto albedoProvider =
+            eng::pipe::TextureAlbedo{
+                vcIt,
+                _model.texturesBegin(),
+                image.data()[0],
+                static_cast<uint32_t >(image.w()),
+                static_cast<uint32_t >(image.h())
+            };
+        auto normalProvider = eng::pipe::NormalByPhong{normalsCopy.cbegin()};
+        auto specularCoefficientProvider =
+            eng::pipe::TextureSpecular{
+                vcIt,
+                _model.texturesBegin(),
+                specular.data()[0],
+                static_cast<uint32_t >(specular.w()),
+                static_cast<uint32_t >(specular.h())
+            };
+        auto specularProvider = eng::pipe::SpecularByPhong{_camera.getEye(), vCopy.cbegin(), 128, specularCoefficientProvider};
+        eng::pipe::PhongShader shader{_light, albedoProvider, normalProvider, specularProvider, colorInserter};
+        _pipe.rasterize(vcIt, shader);
         break;
+    }
+    case DrawStyle::Universal : {
+        Fl_PNG_Image image{"/Users/egor/work/objfiles/Head/diffuse.png"};
+        Fl_PNG_Image normals{"/Users/egor/work/objfiles/Head/normal.png"};
+        Fl_PNG_Image specular{"/Users/egor/work/objfiles/Head/specular.png"};
+        std::vector<eng::Normal> normalsCopy{_model.normalsBegin(),
+                                             _model.normalsEnd()};
+        std::vector<eng::Vertex> vCopy{_model.verticesBegin(),
+                                              _model.verticesEnd()};
+        std::transform(
+            normalsCopy.begin(), normalsCopy.end(), normalsCopy.begin(),
+            [modelMatrix = _model.getModelMatrix()](eng::vec::Vec3F normal) {
+              return (modelMatrix *
+                      eng::vec::Vec4F{normal[0], normal[1], normal[2], 0})
+                  .trim<3>();
+            });
+        std::transform(
+            vCopy.begin(), vCopy.end(), vCopy.begin(),
+            [modelMatrix = _model.getModelMatrix()](eng::vec::Vec4F vertex) {
+              return modelMatrix * vertex;
+            });
+
+        auto albedoProvider =
+            eng::pipe::TextureAlbedo{
+                vcIt,
+                _model.texturesBegin(),
+                image.data()[0],
+                static_cast<uint32_t >(image.w()),
+                static_cast<uint32_t >(image.h())
+            };
+        auto normalProvider =
+            eng::pipe::TextureNormal{
+                vcIt,
+                _model.getModelMatrix(),
+                _model.texturesBegin(),
+                normals.data()[0],
+                static_cast<uint32_t>(normals.w()),
+                static_cast<uint32_t>(normals.h())
+            };
+        auto specularCoefficientProvider =
+            eng::pipe::TextureSpecular{
+                vcIt,
+                _model.texturesBegin(),
+                specular.data()[0],
+                static_cast<uint32_t >(specular.w()),
+                static_cast<uint32_t >(specular.h())
+            };
+        auto specularProvider = eng::pipe::SpecularByPhong{_camera.getEye(), vCopy.cbegin(), 128, specularCoefficientProvider};
+        eng::pipe::PhongShader shader{_light, albedoProvider, normalProvider, specularProvider, colorInserter};
+        _pipe.rasterize(vcIt, shader);
     }
     }
     fl_draw_image(screenArray.data(), 0, 0, w(), h(), 3);
@@ -145,6 +246,12 @@ int ScreenDrawer::handle(int event)
                 currentStyle = DrawStyle::PhongShadingWithPhong;
                 break;
             case DrawStyle::PhongShadingWithPhong:
+                currentStyle = DrawStyle::Diffuse;
+                break;
+            case DrawStyle::Diffuse:
+                currentStyle = DrawStyle::Universal;
+                break;
+            case DrawStyle::Universal:
                 currentStyle = DrawStyle::Mesh;
                 break;
             }
