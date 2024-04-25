@@ -15,8 +15,7 @@
 
 class ScreenDrawer : public Fl_Window {
 public:
-    ScreenDrawer(int width, int height,
-                 eng::ent::Model &&model,
+    ScreenDrawer(int width, int height, eng::ent::Model &&model,
                  eng::ent::Camera camera,
                  eng::ent::CameraProjection cameraProjection,
                  eng::ent::DistantLight light);

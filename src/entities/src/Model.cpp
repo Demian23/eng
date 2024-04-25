@@ -2,9 +2,10 @@
 
 namespace eng::ent {
 
-void Model::reset(std::vector<Vertex> &&vertices, std::vector<Triangle> &&polygons,
-           std::vector<Normal> &&normals,
-           std::vector<TextureCoord> &&textureCoords)
+void Model::reset(std::vector<Vertex> &&vertices,
+                  std::vector<Triangle> &&polygons,
+                  std::vector<Normal> &&normals,
+                  std::vector<TextureCoord> &&textureCoords)
 {
     _vertices = std::move(vertices);
     _triangles = std::move(polygons);
@@ -51,36 +52,17 @@ void Model::clearModelMatrix() noexcept
     modelMatrix = mtr::Matrix::createIdentityMatrix();
 }
 
-Model::polygonIteratorType Model::trianglesBegin() const noexcept
-{
-    return _triangles.cbegin();
+[[nodiscard]] vec::Vec3F Model::getAlbedo() const noexcept { return _albedo; }
+void Model::setAlbedo(vec::Vec3F newAlbedo) noexcept { _albedo = newAlbedo; }
+
+void Model::setDiffuseMap(std::unique_ptr<Fl_RGB_Image>&& diffuse){
+    _diffuseMap = std::move(diffuse);
 }
-
-Model::polygonIteratorType Model::trianglesEnd() const noexcept
-{
-    return _triangles.cend();
+void Model::setSpecularMap(std::unique_ptr<Fl_RGB_Image>&& specular){
+    _specularMap = std::move(specular);
 }
-
-[[nodiscard]] bool Model::empty() const noexcept { return _triangles.empty(); }
-
-[[nodiscard]] Model::vertexIteratorType Model::verticesBegin() const noexcept
-{
-    return _vertices.cbegin();
-}
-
-[[nodiscard]] Model::vertexIteratorType Model::verticesEnd() const noexcept
-{
-    return _vertices.cend();
-}
-
-[[nodiscard]] Model::normalsIteratorType Model::normalsBegin() const noexcept
-{
-    return _normals.cbegin();
-}
-
-[[nodiscard]] Model::normalsIteratorType Model::normalsEnd() const noexcept
-{
-    return _normals.cend();
+void Model::setNormalMap(std::unique_ptr<Fl_RGB_Image>&& normal){
+    _normalMap = std::move(normal);
 }
 
 } // namespace eng::ent

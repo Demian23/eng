@@ -91,8 +91,8 @@ public:
 };
 
 template <size_t dimensions, numeric Component>
-DimensionalVector<dimensions, Component> operator*(const DimensionalVector<dimensions, Component> &a,
-                   floating b)
+DimensionalVector<dimensions, Component>
+operator*(const DimensionalVector<dimensions, Component> &a, floating b)
 {
     auto z = a;
     return z *= b;

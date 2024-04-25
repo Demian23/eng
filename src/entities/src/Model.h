@@ -3,6 +3,7 @@
 #include "../../base/src/Elements.h"
 #include "../../matrix/src/Matrix.h"
 #include "../../vector/src/DimensionalVector.h"
+#include "FL/Fl_RGB_Image.H"
 #include <vector>
 
 namespace eng::ent {
@@ -17,24 +18,30 @@ namespace eng::ent {
 
 class Model final {
 public:
-    using polygonIteratorType = std::vector<Triangle>::const_iterator;
-    using vertexIteratorType = std::vector<Vertex>::const_iterator;
-    using normalsIteratorType = std::vector<Normal>::const_iterator;
-
     static constexpr vec::Vec3F defaultAlbedo = {0.18f, 0.18f, 0.18f};
-    Model():_vertices{}, _normals{}, _textureCoords{}, _triangles{}, _albedo{defaultAlbedo}, modelMatrix{mtr::Matrix::createIdentityMatrix()}{}
+
+    Model()
+        : _vertices{}, _normals{}, _textureCoords{}, _triangles{},
+          _diffuseMap(), _normalMap(), _specularMap(), _albedo{defaultAlbedo},
+          modelMatrix{mtr::Matrix::createIdentityMatrix()}
+    {}
     Model(std::vector<Vertex> &&vertices, std::vector<Triangle> &&polygons,
           std::vector<Normal> &&normals = {},
           std::vector<TextureCoord> &&textureCoords = {},
-          vec::Vec3F albedo = defaultAlbedo)
+          vec::Vec3F albedo = defaultAlbedo,
+          std::unique_ptr<Fl_RGB_Image> &&diffuseMap = nullptr,
+          std::unique_ptr<Fl_RGB_Image> &&normalMap = nullptr,
+          std::unique_ptr<Fl_RGB_Image> &&specularMap = nullptr)
         : _vertices(std::move(vertices)), _normals(std::move(normals)),
           _textureCoords(std::move(textureCoords)), _triangles(polygons),
-          _albedo{albedo}, modelMatrix(mtr::Matrix::createIdentityMatrix())
+          _diffuseMap{std::move(diffuseMap)}, _normalMap{std::move(normalMap)},
+          _specularMap{std::move(specularMap)}, _albedo{albedo},
+          modelMatrix{mtr::Matrix::createIdentityMatrix()}
     {}
 
     void reset(std::vector<Vertex> &&vertices, std::vector<Triangle> &&polygons,
-          std::vector<Normal> &&normals,
-          std::vector<TextureCoord> &&textureCoords);
+               std::vector<Normal> &&normals,
+               std::vector<TextureCoord> &&textureCoords);
 
     void addModelTransformation(mtr::Matrix transformation) noexcept;
 
@@ -52,41 +59,64 @@ public:
 
     void clearModelMatrix() noexcept;
 
-    [[nodiscard]] polygonIteratorType trianglesBegin() const noexcept;
+    [[nodiscard]] vec::Vec3F getAlbedo() const noexcept;
+    void setAlbedo(vec::Vec3F newAlbedo) noexcept;
 
-    [[nodiscard]] polygonIteratorType trianglesEnd() const noexcept;
+    void setDiffuseMap(std::unique_ptr<Fl_RGB_Image>&& diffuse);
+    void setSpecularMap(std::unique_ptr<Fl_RGB_Image>&& specular);
+    void setNormalMap(std::unique_ptr<Fl_RGB_Image>&& normal);
+    const auto& getDiffuseMap()const noexcept{return _diffuseMap;}
+    const auto& getNormalMap()const noexcept{return _normalMap;}
+    const auto& getSpecularMap()const noexcept{return _specularMap;}
 
-    [[nodiscard]] vertexIteratorType verticesBegin() const noexcept;
 
-    [[nodiscard]] vertexIteratorType verticesEnd() const noexcept;
+    [[nodiscard]] inline auto trianglesBegin() const noexcept
+    {
+        return _triangles.cbegin();
+    }
 
-    [[nodiscard]] normalsIteratorType normalsBegin() const noexcept;
+    [[nodiscard]] inline auto trianglesEnd() const noexcept
+    {
+        return _triangles.cend();
+    }
 
-    [[nodiscard]] normalsIteratorType normalsEnd() const noexcept;
+    [[nodiscard]] inline auto verticesBegin() const noexcept
+    {
+        return _vertices.cbegin();
+    }
 
-    [[nodiscard]] inline auto texturesBegin() const noexcept{
+    [[nodiscard]] inline auto verticesEnd() const noexcept
+    {
+        return _vertices.cend();
+    }
+
+    [[nodiscard]] inline auto normalsBegin() const noexcept
+    {
+        return _normals.cbegin();
+    }
+
+    [[nodiscard]] inline auto normalsEnd() const noexcept
+    {
+        return _normals.cend();
+    }
+    [[nodiscard]] inline auto textureCoordsBegin() const noexcept
+    {
         return _textureCoords.cbegin();
     }
-    [[nodiscard]] inline auto texturesEnd() const noexcept{
+
+    [[nodiscard]] inline auto textureCoordsEnd() const noexcept
+    {
         return _textureCoords.cend();
     }
-
-    [[nodiscard]] inline vec::Vec3F getAlbedo() const noexcept
-    {
-        return _albedo;
-    }
-    inline void setAlbedo(vec::Vec3F newAlbedo) noexcept
-    {
-        _albedo = newAlbedo;
-    }
-
-    [[nodiscard]] bool empty() const noexcept;
 
 private:
     std::vector<Vertex> _vertices;
     std::vector<Normal> _normals;
     std::vector<TextureCoord> _textureCoords;
     std::vector<Triangle> _triangles;
+    std::unique_ptr<Fl_RGB_Image> _diffuseMap;
+    std::unique_ptr<Fl_RGB_Image> _normalMap;
+    std::unique_ptr<Fl_RGB_Image> _specularMap;
     vec::Vec3F _albedo;
     mtr::Matrix modelMatrix;
 };

@@ -84,7 +84,6 @@ TEST_CASE("Parse stream completely")
     REQUIRE(normals == expectedNormals);
     REQUIRE(textures == expectedTextures);
 
-
     for (const auto &polygon : polygons) {
         for (const auto &component : polygon) {
             REQUIRE(component.vertexOffset == 0);

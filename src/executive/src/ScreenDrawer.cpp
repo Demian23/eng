@@ -8,13 +8,15 @@ enum class ScreenDrawer::DrawStyle {
     LambertRule,
     PhongShadingWithLambert,
     PhongShadingWithPhong,
-    Diffuse,
-    Universal
+    TextureDiffuseSpecular,
+    TextureDiffuseNormal,
+    TextureDiffuseNormalSpecular
 };
 
 ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
                            eng::ent::Camera camera,
-                           eng::ent::CameraProjection cameraProjection, eng::ent::DistantLight light)
+                           eng::ent::CameraProjection cameraProjection,
+                           eng::ent::DistantLight light)
     : Fl_Window{width, height}, _model(std::move(model)), _camera(camera),
       _projection(cameraProjection), _pipe{_model, _camera, _projection},
       _light{light}, screenArray{static_cast<uint64_t>(width * height)},
@@ -31,30 +33,34 @@ void ScreenDrawer::draw()
         currentFocus == Focused::Camera ? RGB{0, 0, 255} : RGB{0, 255, 0};
     auto verticesCopy = _pipe.applyVertexTransformations(0, w(), 0, h());
     auto vcIt = verticesCopy.cbegin();
-    auto colorInserter =
-        [=, this, xSize = static_cast<uint32_t>(w())](long long x, long long y,
-                                                      eng::vec::Vec3F color) {
-            screenArray[static_cast<uint32_t>(y) * xSize +
-                        static_cast<uint32_t>(x)] = {
-                static_cast<uint8_t>(color[0]), static_cast<uint8_t>(color[1]),
-                static_cast<uint8_t>(color[2])};
-        };
-    auto constantColorInserter = [inserter = colorInserter, colorAsFloat = eng::vec::Vec3F{static_cast<eng::floating>(color.r), static_cast<eng::floating>(color.g), static_cast<eng::floating>(color.b)}](long long x, long long y){inserter(x, y, colorAsFloat);};
+    auto colorInserter = [=, this, xSize = static_cast<uint32_t>(w())](
+                             long long x, long long y, eng::vec::Vec3F color) {
+        screenArray[static_cast<uint32_t>(y) * xSize +
+                    static_cast<uint32_t>(x)] = {
+            static_cast<uint8_t>(color[0]), static_cast<uint8_t>(color[1]),
+            static_cast<uint8_t>(color[2])};
+    };
+    auto constantColorInserter =
+        [inserter = colorInserter,
+         colorAsFloat = eng::vec::Vec3F{static_cast<eng::floating>(color.r),
+                                        static_cast<eng::floating>(color.g),
+                                        static_cast<eng::floating>(color.b)}](
+            long long x, long long y) { inserter(x, y, colorAsFloat); };
     switch (currentStyle) {
     case DrawStyle::Mesh:
         _pipe.drawMesh(0, w(), 0, h(), constantColorInserter);
         break;
     case DrawStyle::LambertRule: {
-        eng::pipe::FlatShaderWithLambertColoring shader{
-            _model.getModelMatrix(), _light, colorInserter,
-            _model.verticesBegin()};
+        eng::pipe::FlatShaderWithLambertColoring shader{_model.getModelMatrix(),
+                                                        _light, colorInserter,
+                                                        _model.verticesBegin()};
         _pipe.rasterize(vcIt, shader);
         break;
     }
     case DrawStyle::PhongShadingWithLambert: {
         std::vector<eng::Normal> normalsCopy{_model.normalsBegin(),
                                              _model.normalsEnd()};
-        if(normalsCopy.empty())
+        if (normalsCopy.empty())
             break;
         std::transform(
             normalsCopy.begin(), normalsCopy.end(), normalsCopy.begin(),
@@ -63,8 +69,8 @@ void ScreenDrawer::draw()
                         eng::vec::Vec4F{normal[0], normal[1], normal[2], 0})
                     .trim<3>();
             });
-        eng::pipe::PhongShaderWithLambertColoring shader{
-            _light, colorInserter, normalsCopy.begin()};
+        eng::pipe::PhongShaderWithLambertColoring shader{_light, colorInserter,
+                                                         normalsCopy.begin()};
         _pipe.rasterize(vcIt, shader);
         break;
     }
@@ -72,7 +78,7 @@ void ScreenDrawer::draw()
         std::vector<eng::Normal> normalsCopy{_model.normalsBegin(),
                                              _model.normalsEnd()};
         std::vector<eng::Vertex> vCopy{_model.verticesBegin(),
-                                              _model.verticesEnd()};
+                                       _model.verticesEnd()};
         if (normalsCopy.empty())
             break;
         std::transform(
@@ -97,97 +103,121 @@ void ScreenDrawer::draw()
         _pipe.rasterize(vcIt, shader);
         break;
     }
-    case DrawStyle::Diffuse: {
-        Fl_PNG_Image image{"/Users/egor/work/objfiles/Head/diffuse.png"};
-        Fl_PNG_Image specular{"/Users/egor/work/objfiles/Head/specular.png"};
-        std::vector<eng::Normal> normalsCopy{_model.normalsBegin(),
-                                             _model.normalsEnd()};
-        std::vector<eng::Vertex> vCopy{_model.verticesBegin(),
-                                       _model.verticesEnd()};
-        std::transform(
-            normalsCopy.begin(), normalsCopy.end(), normalsCopy.begin(),
-            [modelMatrix = _model.getModelMatrix()](eng::vec::Vec3F normal) {
-              return (modelMatrix *
-                      eng::vec::Vec4F{normal[0], normal[1], normal[2], 0})
-                  .trim<3>();
-            });
-        std::transform(
-            vCopy.begin(), vCopy.end(), vCopy.begin(),
-            [modelMatrix = _model.getModelMatrix()](eng::vec::Vec4F vertex) {
-              return modelMatrix * vertex;
-            });
-        auto albedoProvider =
-            eng::pipe::TextureAlbedo{
-                vcIt,
-                _model.texturesBegin(),
-                image.data()[0],
-                static_cast<uint32_t >(image.w()),
-                static_cast<uint32_t >(image.h())
+    case DrawStyle::TextureDiffuseSpecular:
+        if(_model.getDiffuseMap() && _model.getSpecularMap()){
+            std::vector<eng::Normal> normalsCopy{_model.normalsBegin(),
+                                                 _model.normalsEnd()};
+            std::vector<eng::Vertex> vCopy{_model.verticesBegin(),
+                                           _model.verticesEnd()};
+            std::transform(
+                normalsCopy.begin(), normalsCopy.end(), normalsCopy.begin(),
+                [modelMatrix = _model.getModelMatrix()](eng::vec::Vec3F normal) {
+                  return (modelMatrix *
+                          eng::vec::Vec4F{normal[0], normal[1], normal[2], 0})
+                      .trim<3>();
+                });
+            std::transform(
+                vCopy.begin(), vCopy.end(), vCopy.begin(),
+                [modelMatrix = _model.getModelMatrix()](eng::vec::Vec4F vertex) {
+                  return modelMatrix * vertex;
+                });
+            decltype(auto) diffRef = _model.getDiffuseMap();
+            decltype(auto) specularRef= _model.getSpecularMap();
+            auto albedoProvider = eng::pipe::TextureAlbedo{
+                vcIt, _model.textureCoordsBegin(), diffRef->data()[0],
+                static_cast<uint32_t>(diffRef->w()), static_cast<uint32_t>(diffRef->h()),
+                static_cast<uint8_t>(diffRef->d())
             };
-        auto normalProvider = eng::pipe::NormalByPhong{normalsCopy.cbegin()};
-        auto specularCoefficientProvider =
-            eng::pipe::TextureSpecular{
-                vcIt,
-                _model.texturesBegin(),
-                specular.data()[0],
-                static_cast<uint32_t >(specular.w()),
-                static_cast<uint32_t >(specular.h())
+            auto normalProvider = eng::pipe::NormalByPhong{normalsCopy.cbegin()};
+            auto specularCoefficientProvider = eng::pipe::TextureSpecular{
+                vcIt, _model.textureCoordsBegin(), specularRef->data()[0],
+                static_cast<uint32_t>(specularRef->w()),
+                static_cast<uint32_t>(specularRef->h()),
+                static_cast<uint8_t>(specularRef->d())
             };
-        auto specularProvider = eng::pipe::SpecularByPhong{_camera.getEye(), vCopy.cbegin(), 128, specularCoefficientProvider};
-        eng::pipe::PhongShader shader{_light, albedoProvider, normalProvider, specularProvider, colorInserter};
-        _pipe.rasterize(vcIt, shader);
+            auto specularProvider = eng::pipe::SpecularByPhong{
+                _camera.getEye(), vCopy.cbegin(), 128, specularCoefficientProvider};
+            eng::pipe::PhongShader shader{_light, albedoProvider, normalProvider,
+                                          specularProvider, colorInserter};
+            _pipe.rasterize(vcIt, shader);
+        }
         break;
-    }
-    case DrawStyle::Universal : {
-        Fl_PNG_Image image{"/Users/egor/work/objfiles/Head/diffuse.png"};
-        Fl_PNG_Image normals{"/Users/egor/work/objfiles/Head/normal.png"};
-        Fl_PNG_Image specular{"/Users/egor/work/objfiles/Head/specular.png"};
-        std::vector<eng::Normal> normalsCopy{_model.normalsBegin(),
-                                             _model.normalsEnd()};
-        std::vector<eng::Vertex> vCopy{_model.verticesBegin(),
-                                              _model.verticesEnd()};
-        std::transform(
-            normalsCopy.begin(), normalsCopy.end(), normalsCopy.begin(),
-            [modelMatrix = _model.getModelMatrix()](eng::vec::Vec3F normal) {
-              return (modelMatrix *
-                      eng::vec::Vec4F{normal[0], normal[1], normal[2], 0})
-                  .trim<3>();
-            });
-        std::transform(
-            vCopy.begin(), vCopy.end(), vCopy.begin(),
-            [modelMatrix = _model.getModelMatrix()](eng::vec::Vec4F vertex) {
-              return modelMatrix * vertex;
-            });
+    case DrawStyle::TextureDiffuseNormal:
+        if(_model.getDiffuseMap() && _model.getNormalMap()){
+            std::vector<eng::Vertex> vCopy{_model.verticesBegin(),
+                                           _model.verticesEnd()};
+            std::transform(
+                vCopy.begin(), vCopy.end(), vCopy.begin(),
+                [modelMatrix = _model.getModelMatrix()](eng::vec::Vec4F vertex) {
+                  return modelMatrix * vertex;
+                });
 
-        auto albedoProvider =
-            eng::pipe::TextureAlbedo{
-                vcIt,
-                _model.texturesBegin(),
-                image.data()[0],
-                static_cast<uint32_t >(image.w()),
-                static_cast<uint32_t >(image.h())
+            decltype(auto) diffRef = _model.getDiffuseMap();
+            decltype(auto) normalRef= _model.getNormalMap();
+            auto albedoProvider = eng::pipe::TextureAlbedo{
+                vcIt, _model.textureCoordsBegin(), diffRef->data()[0],
+                static_cast<uint32_t>(diffRef->w()),
+                static_cast<uint32_t>(diffRef->h()),
+                static_cast<uint8_t>(diffRef->d())
             };
-        auto normalProvider =
-            eng::pipe::TextureNormal{
-                vcIt,
-                _model.getModelMatrix(),
-                _model.texturesBegin(),
-                normals.data()[0],
-                static_cast<uint32_t>(normals.w()),
-                static_cast<uint32_t>(normals.h())
+            auto normalProvider =
+                eng::pipe::TextureNormal{vcIt,
+                                         _model.getModelMatrix(),
+                                         _model.textureCoordsBegin(),
+                                         normalRef->data()[0],
+                                         static_cast<uint32_t>(normalRef->w()),
+                                         static_cast<uint32_t>(normalRef->h()),
+                                         static_cast<uint8_t>(normalRef->d()),
+                };
+            auto specularCoefficientProvider = [](eng::floating, eng::floating, eng::floating, eng::Triangle){return eng::vec::Vec3F{1.f, 1.f, 1.f};};
+            auto specularProvider = eng::pipe::SpecularByPhong{
+                _camera.getEye(), vCopy.cbegin(), 128, specularCoefficientProvider};
+            eng::pipe::PhongShader shader{_light, albedoProvider, normalProvider,
+                                          specularProvider, colorInserter};
+            _pipe.rasterize(vcIt, shader);
+
+        }
+        break;
+    case DrawStyle::TextureDiffuseNormalSpecular:
+        if(_model.getDiffuseMap() && _model.getNormalMap() && _model.getSpecularMap()){
+            std::vector<eng::Vertex> vCopy{_model.verticesBegin(),
+                                           _model.verticesEnd()};
+            std::transform(
+                vCopy.begin(), vCopy.end(), vCopy.begin(),
+                [modelMatrix = _model.getModelMatrix()](eng::vec::Vec4F vertex) {
+                  return modelMatrix * vertex;
+                });
+
+            decltype(auto) diffRef = _model.getDiffuseMap();
+            decltype(auto) normalRef= _model.getNormalMap();
+            decltype(auto) specularRef= _model.getSpecularMap();
+            auto albedoProvider = eng::pipe::TextureAlbedo{
+                vcIt, _model.textureCoordsBegin(), diffRef->data()[0],
+                static_cast<uint32_t>(diffRef->w()), static_cast<uint32_t>(diffRef->h()),
+                static_cast<uint8_t>(diffRef->d())
             };
-        auto specularCoefficientProvider =
-            eng::pipe::TextureSpecular{
-                vcIt,
-                _model.texturesBegin(),
-                specular.data()[0],
-                static_cast<uint32_t >(specular.w()),
-                static_cast<uint32_t >(specular.h())
+            auto normalProvider =
+                eng::pipe::TextureNormal{vcIt,
+                                         _model.getModelMatrix(),
+                                         _model.textureCoordsBegin(),
+                                         normalRef->data()[0],
+                                         static_cast<uint32_t>(normalRef->w()),
+                                         static_cast<uint32_t>(normalRef->h()),
+                                         static_cast<uint8_t>(normalRef->d())
+                };
+            auto specularCoefficientProvider = eng::pipe::TextureSpecular{
+                vcIt, _model.textureCoordsBegin(), specularRef->data()[0],
+                static_cast<uint32_t>(specularRef->w()),
+                static_cast<uint32_t>(specularRef->h()),
+                static_cast<uint8_t>(specularRef->d())
             };
-        auto specularProvider = eng::pipe::SpecularByPhong{_camera.getEye(), vCopy.cbegin(), 128, specularCoefficientProvider};
-        eng::pipe::PhongShader shader{_light, albedoProvider, normalProvider, specularProvider, colorInserter};
-        _pipe.rasterize(vcIt, shader);
-    }
+            auto specularProvider = eng::pipe::SpecularByPhong{
+                _camera.getEye(), vCopy.cbegin(), 128, specularCoefficientProvider};
+            eng::pipe::PhongShader shader{_light, albedoProvider, normalProvider,
+                                          specularProvider, colorInserter};
+            _pipe.rasterize(vcIt, shader);
+
+        }
     }
     fl_draw_image(screenArray.data(), 0, 0, w(), h(), 3);
 }
@@ -246,12 +276,15 @@ int ScreenDrawer::handle(int event)
                 currentStyle = DrawStyle::PhongShadingWithPhong;
                 break;
             case DrawStyle::PhongShadingWithPhong:
-                currentStyle = DrawStyle::Diffuse;
+                currentStyle = DrawStyle::TextureDiffuseSpecular;
                 break;
-            case DrawStyle::Diffuse:
-                currentStyle = DrawStyle::Universal;
+            case DrawStyle::TextureDiffuseSpecular:
+                currentStyle = DrawStyle::TextureDiffuseNormal;
                 break;
-            case DrawStyle::Universal:
+            case DrawStyle::TextureDiffuseNormal:
+                currentStyle = DrawStyle::TextureDiffuseNormalSpecular;
+                break;
+            case DrawStyle::TextureDiffuseNormalSpecular:
                 currentStyle = DrawStyle::Mesh;
                 break;
             }

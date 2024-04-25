@@ -1,10 +1,10 @@
 #pragma once
 
+#include "../../algorithm/src/alg.h"
 #include "../../entities/src/Camera.h"
 #include "../../entities/src/CameraProjection.h"
 #include "../../entities/src/Light.h"
 #include "../../entities/src/Model.h"
-#include "../../algorithm/src/alg.h"
 
 #include <numbers>
 
@@ -14,7 +14,7 @@ template <typename T>
 concept Shader = requires(T &&shader, uint32_t x, uint32_t y, floating u,
                           floating v, floating w, Triangle triangle) {
     {
-    shader(x, y, u, v, w, triangle)
+        shader(x, y, u, v, w, triangle)
     } -> std::same_as<void>;
 };
 
@@ -81,19 +81,25 @@ public:
              mMatrix = _model.getModelMatrix(),
              cEye = _camera.getEye()](auto &&triangle) {
                 auto aInWorldSpace =
-                    (mMatrix * *(svIt + triangle[0].vertexOffset)).template trim<3>();
+                    (mMatrix * *(svIt + triangle[0].vertexOffset))
+                        .template trim<3>();
                 auto bInWorldSpace =
-                    (mMatrix * *(svIt + triangle[1].vertexOffset)).template trim<3>();
+                    (mMatrix * *(svIt + triangle[1].vertexOffset))
+                        .template trim<3>();
                 auto cInWorldSpace =
-                    (mMatrix * *(svIt + triangle[2].vertexOffset)).template trim<3>();
+                    (mMatrix * *(svIt + triangle[2].vertexOffset))
+                        .template trim<3>();
                 auto tNormal = vec::cross(cInWorldSpace - aInWorldSpace,
                                           bInWorldSpace - aInWorldSpace);
                 auto eyeDirection = aInWorldSpace - cEye;
                 auto normalDotEye = eyeDirection * tNormal;
                 if (normalDotEye >= 0) {
-                    auto a = (cvIt + triangle[0].vertexOffset)->template trim<3>();
-                    auto b = (cvIt + triangle[1].vertexOffset)->template trim<3>();
-                    auto c = (cvIt + triangle[2].vertexOffset)->template trim<3>();
+                    auto a =
+                        (cvIt + triangle[0].vertexOffset)->template trim<3>();
+                    auto b =
+                        (cvIt + triangle[1].vertexOffset)->template trim<3>();
+                    auto c =
+                        (cvIt + triangle[2].vertexOffset)->template trim<3>();
                     alg::barycentricCoordinates(
                         a, b, c, zBuffer,
                         [=](uint32_t x, uint32_t y, floating u, floating v,
@@ -101,6 +107,7 @@ public:
                 }
             });
     }
+
 private:
     ent::Model &_model;
     ent::Camera &_camera;
