@@ -55,13 +55,16 @@ void Model::clearModelMatrix() noexcept
 [[nodiscard]] vec::Vec3F Model::getAlbedo() const noexcept { return _albedo; }
 void Model::setAlbedo(vec::Vec3F newAlbedo) noexcept { _albedo = newAlbedo; }
 
-void Model::setDiffuseMap(std::unique_ptr<Fl_RGB_Image>&& diffuse){
+void Model::setDiffuseMap(std::unique_ptr<Fl_RGB_Image> &&diffuse)
+{
     _diffuseMap = std::move(diffuse);
 }
-void Model::setSpecularMap(std::unique_ptr<Fl_RGB_Image>&& specular){
+void Model::setSpecularMap(std::unique_ptr<Fl_RGB_Image> &&specular)
+{
     _specularMap = std::move(specular);
 }
-void Model::setNormalMap(std::unique_ptr<Fl_RGB_Image>&& normal){
+void Model::setNormalMap(std::unique_ptr<Fl_RGB_Image> &&normal)
+{
     _normalMap = std::move(normal);
 }
 

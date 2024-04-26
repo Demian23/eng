@@ -62,13 +62,12 @@ public:
     [[nodiscard]] vec::Vec3F getAlbedo() const noexcept;
     void setAlbedo(vec::Vec3F newAlbedo) noexcept;
 
-    void setDiffuseMap(std::unique_ptr<Fl_RGB_Image>&& diffuse);
-    void setSpecularMap(std::unique_ptr<Fl_RGB_Image>&& specular);
-    void setNormalMap(std::unique_ptr<Fl_RGB_Image>&& normal);
-    const auto& getDiffuseMap()const noexcept{return _diffuseMap;}
-    const auto& getNormalMap()const noexcept{return _normalMap;}
-    const auto& getSpecularMap()const noexcept{return _specularMap;}
-
+    void setDiffuseMap(std::unique_ptr<Fl_RGB_Image> &&diffuse);
+    void setSpecularMap(std::unique_ptr<Fl_RGB_Image> &&specular);
+    void setNormalMap(std::unique_ptr<Fl_RGB_Image> &&normal);
+    const auto &getDiffuseMap() const noexcept { return _diffuseMap; }
+    const auto &getNormalMap() const noexcept { return _normalMap; }
+    const auto &getSpecularMap() const noexcept { return _specularMap; }
 
     [[nodiscard]] inline auto trianglesBegin() const noexcept
     {

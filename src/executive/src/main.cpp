@@ -130,11 +130,12 @@ std::string readArgsAndReturnPathToObj(
             "255,255,255"))("light-type", "Light type: directional")(
         "albedo", "Albedo as vector with 3 float in range 0 to 1",
         cxxopts::value<std::vector<eng::floating>>()->default_value(
-            "0.18,0.18,0.18"))
-        ("diffuse-map", "Path to diffuse map for model", cxxopts::value<std::string>())
-        ("normal-map", "Path to normal map for model", cxxopts::value<std::string>())
-        ("specular-map", "Path to normal map for model", cxxopts::value<std::string>())
-        ;
+            "0.18,0.18,0.18"))("diffuse-map", "Path to diffuse map for model",
+                               cxxopts::value<std::string>())(
+        "normal-map", "Path to normal map for model",
+        cxxopts::value<std::string>())("specular-map",
+                                       "Path to normal map for model",
+                                       cxxopts::value<std::string>());
 
     options.parse_positional({"source"});
 
@@ -160,13 +161,13 @@ std::string readArgsAndReturnPathToObj(
     if (result.count("fov"))
         projectionForInit.setAngleInDegrees(result["fov"].as<eng::floating>());
     std::string diffuseMap{}, normalMap{}, specularMap{};
-    if(result.count("diffuse-map")){
+    if (result.count("diffuse-map")) {
         diffuseMap = result["diffuse-map"].as<std::string>();
     }
-    if(result.count("normal-map")){
+    if (result.count("normal-map")) {
         normalMap = result["normal-map"].as<std::string>();
     }
-    if(result.count("specular-map")){
+    if (result.count("specular-map")) {
         specularMap = result["specular-map"].as<std::string>();
     }
     addTextureMaps(modelForInit, diffuseMap, normalMap, specularMap);
@@ -215,13 +216,13 @@ void addTextureMaps(eng::ent::Model &model, std::string_view diffuseMapPath,
                     std::string_view normalMapPath,
                     std::string_view specularMapPath)
 {
-    if(!diffuseMapPath.empty()){
+    if (!diffuseMapPath.empty()) {
         model.setDiffuseMap(getRGBImage(diffuseMapPath));
     }
-    if(!normalMapPath.empty()){
+    if (!normalMapPath.empty()) {
         model.setNormalMap(getRGBImage(normalMapPath));
     }
-    if(!specularMapPath.empty()){
+    if (!specularMapPath.empty()) {
         model.setSpecularMap(getRGBImage(specularMapPath));
     }
 }
@@ -233,12 +234,14 @@ std::unique_ptr<Fl_RGB_Image> getRGBImage(std::string_view pathToImage)
 
     if (std::filesystem::is_regular_file(pathToImage)) {
         std::array allowedTextureMapExtensions = {".jpg"sv, ".png"sv, ".bmp"sv};
-        enum extensions{JPEG = 0, PNG = 1, BMP = 2};
+        enum extensions { JPEG = 0, PNG = 1, BMP = 2 };
         auto iter = std::find(allowedTextureMapExtensions.begin(),
-                              allowedTextureMapExtensions.end(), path{pathToImage}.extension());
+                              allowedTextureMapExtensions.end(),
+                              path{pathToImage}.extension());
         if (iter != allowedTextureMapExtensions.end()) {
-            auto specificExtension = static_cast<extensions>(iter - allowedTextureMapExtensions.begin());
-            switch(specificExtension){
+            auto specificExtension = static_cast<extensions>(
+                iter - allowedTextureMapExtensions.begin());
+            switch (specificExtension) {
             case JPEG:
                 return std::make_unique<Fl_JPEG_Image>(pathToImage.data());
             case PNG:

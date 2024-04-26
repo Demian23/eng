@@ -16,6 +16,10 @@ struct PolygonComponent {
     ssize_t textureCoordinatesOffset{};
 };
 
+inline bool operator==(const PolygonComponent a, const PolygonComponent b) {
+    return a.vertexOffset == b.vertexOffset;
+}
+
 struct PolygonIndexes {
     integral vertexIndex;
     integral normalIndex;

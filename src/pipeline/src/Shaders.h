@@ -4,181 +4,37 @@
 #include "../../matrix/src/Matrix.h"
 #include <cstdint>
 
-namespace eng::pipe {
+namespace eng::shader {
 
 template <typename T>
-concept ShaderOut = std::invocable<T, uint32_t, uint32_t, vec::Vec3F>;
+concept ShaderOut = std::invocable<T, uint32_t, uint32_t, vec::Vec3F> && requires(T out){{out({}, {}, {})} -> std::same_as<void>;};
+
+template<typename T>
+concept AlbedoProvider = std::invocable<T, floating, floating, floating, Triangle>
+                         && requires(T provider){ { provider({}, {}, {}, {}) } -> std::convertible_to<vec::Vec3F>;};
+
+template<typename T>
+concept NormalProvider = std::invocable<T, floating, floating, floating, Triangle>
+                         && requires(T provider){ { provider({}, {}, {}, {}) } -> std::convertible_to<vec::Vec3F>;};
+template<typename T>
+concept SpecularPropertiesProvider = std::invocable<T, floating, floating, floating, Triangle>
+                           && requires(T provider){ { provider({}, {}, {}, {}) } -> std::convertible_to<vec::Vec3F>;};
+template<typename T>
+concept SpecularProvider = std::invocable<T, floating, floating, floating, Triangle, vec::Vec3F, vec::Vec3F>
+                           && requires(T provider){ { provider({}, {}, {}, {}, {}, {}) } -> std::convertible_to<vec::Vec3F>;};
+
 
 using nci = std::vector<Normal>::const_iterator;
 using vci = std::vector<Vertex>::const_iterator;
 using tci = std::vector<TextureCoord>::const_iterator;
 
-template <ShaderOut Out> class FlatShaderWithLambertColoring final {
+class NormalInterpolation{
 public:
-    using vci = std::vector<Vertex>::const_iterator;
-
-    FlatShaderWithLambertColoring(mtr::Matrix modelMatrix,
-                                  ent::DistantLight light, Out out,
-                                  vci vertices)
-        : _modelMatrix(modelMatrix), _light(light), _out(out),
-          _vertices(vertices)
-    {}
-
-    void operator()(uint32_t x, uint32_t y, [[maybe_unused]] floating u,
-                    [[maybe_unused]] floating v, [[maybe_unused]] floating w,
-                    Triangle triangle) const
-    {
-        auto aInWorldSpace =
-            (_modelMatrix * *(_vertices + triangle[0].vertexOffset)).trim<3>();
-        auto bInWorldSpace =
-            (_modelMatrix * *(_vertices + triangle[1].vertexOffset)).trim<3>();
-        auto cInWorldSpace =
-            (_modelMatrix * *(_vertices + triangle[2].vertexOffset)).trim<3>();
-        auto tNormal = vec::cross(cInWorldSpace - aInWorldSpace,
-                                  bInWorldSpace - aInWorldSpace)
-                           .normalize();
-        auto product = std::max(0.f, tNormal * -(_light.direction.trim<3>()));
-        auto lightIntensity = product * _light.intensity;
-        vec::Vec3F color{_light.color[0] * lightIntensity,
-                         _light.color[1] * lightIntensity,
-                         _light.color[2] * lightIntensity};
-        _out(x, y, color);
-    }
-
-private:
-    mtr::Matrix _modelMatrix;
-    ent::DistantLight _light;
-    Out _out;
-    vci _vertices;
-};
-// TODO copying too much
-
-template <ShaderOut Out> class PhongShaderWithLambertColoring final {
-public:
-    using nci = std::vector<Normal>::const_iterator;
-
-    PhongShaderWithLambertColoring(ent::DistantLight light, Out out,
-                                   nci normals)
-        : _light(light), _out(out), _normals(normals)
-    {}
-
-    void operator()(uint32_t x, uint32_t y, [[maybe_unused]] floating u,
-                    [[maybe_unused]] floating v, [[maybe_unused]] floating w,
-                    Triangle triangle) const
-    {
-        auto aNormal = *(_normals + triangle[0].normalOffset);
-        auto bNormal = *(_normals + triangle[1].normalOffset);
-        auto cNormal = *(_normals + triangle[2].normalOffset);
-        auto normalInPoint =
-            Normal{aNormal[0] * u + bNormal[0] * v + cNormal[0] * w,
-                   aNormal[1] * u + bNormal[1] * v + cNormal[1] * w,
-                   aNormal[2] * u + bNormal[2] * v + cNormal[2] * w}
-                .normalize();
-        auto product =
-            std::max(0.f, normalInPoint * _light.direction.trim<3>());
-        auto lightIntensity = product * _light.intensity;
-        vec::Vec3F color{_light.color[0] * lightIntensity,
-                         _light.color[1] * lightIntensity,
-                         _light.color[2] * lightIntensity};
-        _out(x, y, color);
-    }
-
-private:
-    ent::DistantLight _light;
-    Out _out;
-    nci _normals;
-};
-
-template <ShaderOut Out> class PhongShaderWithPhongColoring final {
-public:
-    PhongShaderWithPhongColoring(ent::DistantLight light, Out out, vci vertices,
-                                 nci normals, vec::Vec3F albedo, floating shine,
-                                 vec::Vec3F eye)
-        : _light(light), _out(out), _vertices(vertices), _normals(normals),
-          _eye(eye), _albedo(albedo), _shine(shine)
-    {}
-
-    void operator()(uint32_t x, uint32_t y, [[maybe_unused]] floating u,
-                    [[maybe_unused]] floating v, [[maybe_unused]] floating w,
-                    Triangle triangle) const
-    {
-        auto aNormal = *(_normals + triangle[0].normalOffset);
-        auto bNormal = *(_normals + triangle[1].normalOffset);
-        auto cNormal = *(_normals + triangle[2].normalOffset);
-        auto normalInPoint =
-            Normal{aNormal[0] * u + bNormal[0] * v + cNormal[0] * w,
-                   aNormal[1] * u + bNormal[1] * v + cNormal[1] * w,
-                   aNormal[2] * u + bNormal[2] * v + cNormal[2] * w}
-                .normalize();
-        auto defaultLightIntensity = _light.intensity;
-        auto color = _light.color;
-        auto lightDirection3 = _light.direction.trim<3>();
-        auto normalLightDot = std::max(0.f, normalInPoint * lightDirection3);
-        auto diffuseIntensity = vec::Vec3F{
-            color[0] * _albedo[0] * normalLightDot,
-            color[1] * _albedo[1] * normalLightDot,
-            color[2] * _albedo[2] * normalLightDot,
-        };
-
-        auto ambientIntensity = vec::Vec3F{
-            color[0] * _albedo[0] * defaultLightIntensity,
-            color[1] * _albedo[1] * defaultLightIntensity,
-            color[2] * _albedo[2] * defaultLightIntensity,
-        };
-
-        auto specularIntensity = vec::Vec3F{0, 0, 0};
-        if (normalLightDot > 0) {
-            auto aInWorldSpace = *(_vertices + triangle[0].vertexOffset);
-            auto bInWorldSpace = *(_vertices + triangle[1].vertexOffset);
-            auto cInWorldSpace = *(_vertices + triangle[2].vertexOffset);
-            auto point =
-                vec::Vec3F{aInWorldSpace[0] * u + bInWorldSpace[0] * v +
-                               cInWorldSpace[0] * w,
-                           aInWorldSpace[1] * u + bInWorldSpace[1] * v +
-                               cInWorldSpace[1] * w,
-                           aInWorldSpace[2] * u + bInWorldSpace[2] * v +
-                               cInWorldSpace[2] * w};
-            auto reflectVector =
-                (lightDirection3 - normalInPoint * (2 * (normalLightDot)))
-                    .normalize();
-            auto viewVector = (_eye - point).normalize();
-            auto shineDot = reflectVector * viewVector;
-            auto specularValue = std::pow(shineDot, _shine);
-            specularIntensity =
-                vec::Vec3F{color[0] * specularValue, color[1] * specularValue,
-                           color[2] * specularValue};
-        }
-
-        vec::Vec3F resultColor{
-            std::clamp(diffuseIntensity[0] + specularIntensity[0] +
-                           ambientIntensity[0],
-                       0.f, 255.f),
-            std::clamp(diffuseIntensity[1] + specularIntensity[1] +
-                           ambientIntensity[1],
-                       0.f, 255.f),
-            std::clamp(diffuseIntensity[2] + specularIntensity[2] +
-                           ambientIntensity[2],
-                       0.f, 255.f),
-        };
-        _out(x, y, resultColor);
-    }
-
-private:
-    ent::DistantLight _light;
-    Out _out;
-    vci _vertices;
-    nci _normals;
-    vec::Vec3F _eye, _albedo;
-    floating _shine;
-};
-
-class NormalByPhong {
-public:
-    NormalByPhong(nci normals) : _normals(normals) {}
+    NormalInterpolation(nci normals) : _normals(normals) {}
 
     inline auto operator()([[maybe_unused]] floating u,
                            [[maybe_unused]] floating v,
-                           [[maybe_unused]] floating w, Triangle triangle) const
+                           [[maybe_unused]] floating w, Triangle triangle) const noexcept
     {
         auto aNormal = *(_normals + triangle[0].normalOffset);
         auto bNormal = *(_normals + triangle[1].normalOffset);
@@ -195,10 +51,81 @@ private:
     nci _normals;
 };
 
-template <typename SpecularProvider> class SpecularByPhong {
+class NormalForTriangle {
 public:
-    SpecularByPhong(vec::Vec3F eye, vci vertices, floating shine,
-                    SpecularProvider provider)
+    NormalForTriangle(vci verticesInWorldSpace)
+        : _vertices(verticesInWorldSpace)
+    {}
+
+    inline auto operator()(Triangle triangle) const noexcept
+    {
+        auto a =(*(_vertices + triangle[0].vertexOffset)).trim<3>();
+        auto b = (*(_vertices + triangle[1].vertexOffset)).trim<3>();
+        auto c= (*(_vertices + triangle[2].vertexOffset)).trim<3>();
+        return vec::cross(c - a, b - a).normalize();
+    }
+
+private:
+    vci _vertices;
+};
+
+class NormalForTriangleWithCaching : private NormalForTriangle{
+public:
+    NormalForTriangleWithCaching(vci verticesInWorldSpace)  : NormalForTriangle(verticesInWorldSpace), _previousTriangle{}, _previousNormal{NormalForTriangle::operator()(_previousTriangle)}
+    {}
+    inline auto operator()([[maybe_unused]] floating u,
+                           [[maybe_unused]] floating v,
+                           [[maybe_unused]] floating w, Triangle triangle) const noexcept
+    {
+       if(_previousTriangle == triangle){
+           return _previousNormal;
+       }else{
+           _previousTriangle = triangle;
+           _previousNormal = NormalForTriangle::operator()(_previousTriangle);
+           return _previousNormal;
+       }
+    }
+private:
+    mutable Triangle _previousTriangle;
+    mutable vec::Vec3F _previousNormal;
+};
+
+struct NoSpecular {
+    inline auto operator()([[maybe_unused]] floating, [[maybe_unused]] floating,
+                           [[maybe_unused]] floating, [[maybe_unused]] Triangle,
+                           [[maybe_unused]] vec::Vec3F,
+                           [[maybe_unused]] vec::Vec3F) const noexcept
+    {
+        return vec::Vec3F{0, 0, 0};
+    }
+};
+
+struct FullSpecularProperties{
+    inline auto operator()([[maybe_unused]] floating u,
+                                       [[maybe_unused]] floating v,
+                                       [[maybe_unused]] floating w,[[maybe_unused]] Triangle triangle) const noexcept{
+        return vec::Vec3F{1, 1, 1};
+    }
+};
+
+class ConstantAlbedo{
+public:
+    ConstantAlbedo(vec::Vec3F albedo) : _albedo(albedo){}
+
+    inline vec::Vec3F operator()([[maybe_unused]] floating u,
+                                 [[maybe_unused]] floating v,
+                                 [[maybe_unused]] floating w,
+                                 [[maybe_unused]] Triangle triangle) const noexcept{return _albedo;}
+private:
+    vec::Vec3F _albedo;
+};
+
+
+template <SpecularPropertiesProvider Properties>
+class SpecularCalculation{
+public:
+    SpecularCalculation(vec::Vec3F eye, vci vertices, floating shine,
+                    Properties provider)
         : _provider(provider), _eye(eye), _vertices(vertices), _shine(shine)
     {}
     inline vec::Vec3F operator()([[maybe_unused]] floating u,
@@ -233,7 +160,7 @@ public:
     }
 
 private:
-    SpecularProvider _provider;
+    Properties _provider;
     vec::Vec3F _eye;
     vci _vertices;
     floating _shine;
@@ -244,7 +171,8 @@ public:
     TextureProcessing(vci vertices, tci textures, const char *textureData,
                       uint32_t width, uint32_t height, uint8_t channel)
         : _vertices(vertices), _texturesCoordinates(textures),
-          _textureData(textureData), _width(width), _height(height), _channel(channel)
+          _textureData(textureData), _width(width), _height(height),
+          _channel(channel)
     {}
 
     [[nodiscard]] inline auto getRGB([[maybe_unused]] floating u,
@@ -307,7 +235,8 @@ class TextureAlbedo : private TextureProcessing {
 public:
     TextureAlbedo(vci vertices, tci textures, const char *textureData,
                   uint32_t width, uint32_t height, uint8_t channel)
-        : TextureProcessing(vertices, textures, textureData, width, height, channel)
+        : TextureProcessing(vertices, textures, textureData, width, height,
+                            channel)
     {}
 
     inline vec::Vec3F operator()([[maybe_unused]] floating u,
@@ -324,9 +253,11 @@ public:
 
 class TextureNormal : private TextureProcessing {
 public:
-    TextureNormal(vci vertices, mtr::Matrix modelMatrix, tci textures,
-                  const char *textureData, uint32_t width, uint32_t height, uint8_t channel)
-        : TextureProcessing(vertices, textures, textureData, width, height, channel),
+    TextureNormal(mtr::Matrix modelMatrix, vci vertices,  tci textures,
+                  const char *textureData, uint32_t width, uint32_t height,
+                  uint8_t channel)
+        : TextureProcessing(vertices, textures, textureData, width, height,
+                            channel),
           _modelMatrix(modelMatrix)
     {}
 
@@ -349,12 +280,12 @@ private:
 
 using TextureSpecular = TextureAlbedo;
 
-template <ShaderOut Out, typename AlbedoProvider, typename NormalProvider,
-          typename SpecularProvider>
-class PhongShader {
+template <ShaderOut Out, AlbedoProvider Albedo, NormalProvider Normal,
+          SpecularProvider Specular>
+class Shader {
 public:
-    PhongShader(ent::DistantLight light, AlbedoProvider albedo,
-                NormalProvider normal, SpecularProvider specular, Out out)
+    Shader(ent::DistantLight light, Albedo albedo,
+                Normal normal, Specular specular, Out out)
         : _light(light), _albedo(albedo), _normal(normal), _specular(specular),
           _out(out)
     {}
@@ -402,10 +333,36 @@ public:
 
 private:
     ent::DistantLight _light;
-    AlbedoProvider _albedo;
-    NormalProvider _normal;
-    SpecularProvider _specular;
+    Albedo _albedo;
+    Normal _normal;
+    Specular _specular;
     Out _out;
+};
+
+template <ShaderOut Out>
+class LambertShader : public Shader<Out, ConstantAlbedo, NormalForTriangleWithCaching, NoSpecular>{
+public:
+    LambertShader(ent::DistantLight light, vci verticesInWorldSpace, vec::Vec3F albedo, Out out)
+        : Shader<Out, ConstantAlbedo, NormalForTriangleWithCaching, NoSpecular>{{light.color, -light.direction, light.intensity}, {albedo}, {verticesInWorldSpace}, NoSpecular{}, out}
+    {}
+};
+
+template <ShaderOut Out>
+class PhongShader : public Shader<Out, ConstantAlbedo, NormalInterpolation, SpecularCalculation<FullSpecularProperties>>{
+public:
+    PhongShader(ent::DistantLight light, vci verticesInWorldSpace, nci normalsInWorldSpace, vec::Vec3F albedo, vec::Vec3F eye, floating shine, Out out)
+        : Shader<Out, ConstantAlbedo, NormalInterpolation, SpecularCalculation<FullSpecularProperties>>{
+                                             light, {albedo}, {normalsInWorldSpace}, {eye, verticesInWorldSpace, shine, FullSpecularProperties{}}, out}
+    {}
+};
+
+template <ShaderOut Out>
+class TextureShader: public Shader<Out, TextureAlbedo, TextureNormal, SpecularCalculation<TextureSpecular>>{
+public:
+    TextureShader(ent::DistantLight light, TextureAlbedo albedo, TextureNormal normal, TextureSpecular specular, vci verticesInWorldSpace, vec::Vec3F eye, floating shine, Out out)
+        : Shader<Out, TextureAlbedo, TextureNormal, SpecularCalculation<TextureSpecular>>{
+        light, albedo, normal, {eye, verticesInWorldSpace, shine, specular}, out}
+    {}
 };
 
 } // namespace eng::pipe
