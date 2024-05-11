@@ -19,16 +19,18 @@ namespace eng::ent {
 class Model final {
 public:
     static constexpr vec::Vec3F defaultAlbedo = {0.18f, 0.18f, 0.18f};
+    static constexpr unsigned defaultShinePower = 32;
 
     Model()
         : _vertices{}, _normals{}, _textureCoords{}, _triangles{},
           _diffuseMap(), _normalMap(), _specularMap(), _albedo{defaultAlbedo},
-          modelMatrix{mtr::Matrix::createIdentityMatrix()}
+          modelMatrix{mtr::Matrix::createIdentityMatrix()}, _shinePower{defaultShinePower}
     {}
     Model(std::vector<Vertex> &&vertices, std::vector<Triangle> &&polygons,
           std::vector<Normal> &&normals = {},
           std::vector<TextureCoord> &&textureCoords = {},
           vec::Vec3F albedo = defaultAlbedo,
+          floating shinePower = defaultShinePower,
           std::unique_ptr<Fl_RGB_Image> &&diffuseMap = nullptr,
           std::unique_ptr<Fl_RGB_Image> &&normalMap = nullptr,
           std::unique_ptr<Fl_RGB_Image> &&specularMap = nullptr)
@@ -36,7 +38,7 @@ public:
           _textureCoords(std::move(textureCoords)), _triangles(polygons),
           _diffuseMap{std::move(diffuseMap)}, _normalMap{std::move(normalMap)},
           _specularMap{std::move(specularMap)}, _albedo{albedo},
-          modelMatrix{mtr::Matrix::createIdentityMatrix()}
+          modelMatrix{mtr::Matrix::createIdentityMatrix()}, _shinePower{shinePower}
     {}
 
     void reset(std::vector<Vertex> &&vertices, std::vector<Triangle> &&polygons,
@@ -61,6 +63,10 @@ public:
 
     [[nodiscard]] vec::Vec3F getAlbedo() const noexcept;
     void setAlbedo(vec::Vec3F newAlbedo) noexcept;
+
+    [[nodiscard]] floating getShinePower() const noexcept;
+    void setShinePower(floating newShinePower) noexcept;
+
 
     void setDiffuseMap(std::unique_ptr<Fl_RGB_Image> &&diffuse);
     void setSpecularMap(std::unique_ptr<Fl_RGB_Image> &&specular);
@@ -118,6 +124,7 @@ private:
     std::unique_ptr<Fl_RGB_Image> _specularMap;
     vec::Vec3F _albedo;
     mtr::Matrix modelMatrix;
+    floating _shinePower;
 };
 
 } // namespace eng::ent

@@ -135,7 +135,10 @@ std::string readArgsAndReturnPathToObj(
         "normal-map", "Path to normal map for model",
         cxxopts::value<std::string>())("specular-map",
                                        "Path to normal map for model",
-                                       cxxopts::value<std::string>());
+                                       cxxopts::value<std::string>())
+        ("shine-power", "Shine power coefficient in Phong", cxxopts::value<eng::floating>())
+        ("light-intensity", "Light intensity, value from 0 to 1", cxxopts::value<eng::floating>())
+        ;
 
     options.parse_positional({"source"});
 
@@ -169,6 +172,12 @@ std::string readArgsAndReturnPathToObj(
     }
     if (result.count("specular-map")) {
         specularMap = result["specular-map"].as<std::string>();
+    }
+    if(result.count("shine-power")){
+        modelForInit.setShinePower(result["shine-power"].as<eng::floating>());
+    }
+    if(result.count("light-intensity")){
+       lightForInit.intensity = result["light-intensity"].as<eng::floating>();
     }
     addTextureMaps(modelForInit, diffuseMap, normalMap, specularMap);
 

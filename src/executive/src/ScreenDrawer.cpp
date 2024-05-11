@@ -49,7 +49,7 @@ void ScreenDrawer::draw()
     using namespace eng::shader;
     auto albedo = _model.getAlbedo();
     auto eye = _camera.getEye();
-    floating shine = 1024;
+    auto shine = _model.getShinePower();
     auto textureCoordsIt = _model.textureCoordsBegin();
     auto modelMatrix = _model.getModelMatrix();
     std::vector<Vertex> verticesInWorldSpace{_model.verticesBegin(),

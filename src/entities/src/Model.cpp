@@ -54,6 +54,8 @@ void Model::clearModelMatrix() noexcept
 
 [[nodiscard]] vec::Vec3F Model::getAlbedo() const noexcept { return _albedo; }
 void Model::setAlbedo(vec::Vec3F newAlbedo) noexcept { _albedo = newAlbedo; }
+[[nodiscard]] floating Model::getShinePower() const noexcept { return _shinePower; }
+void Model::setShinePower(floating newShinePower) noexcept { _shinePower = newShinePower; }
 
 void Model::setDiffuseMap(std::unique_ptr<Fl_RGB_Image> &&diffuse)
 {
