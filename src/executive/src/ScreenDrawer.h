@@ -13,7 +13,7 @@ public:
     ScreenDrawer(int width, int height, eng::ent::Model &&model,
                  eng::ent::Camera camera,
                  eng::ent::CameraProjection cameraProjection,
-                 eng::ent::DistantLight light);
+                 eng::ent::LightArray&& lights);
     void draw() override;
     int handle(int) override;
 
@@ -22,12 +22,10 @@ protected:
     eng::ent::Camera _camera;
     eng::ent::CameraProjection _projection;
     eng::pipe::GraphicsPipeline _pipe;
-    eng::ent::DistantLight _light;
+    eng::ent::LightArray _lights;
     eng::ent::PixelArray screenArray;
     enum class Focused;
     enum class DrawStyle;
     Focused currentFocus;
     DrawStyle currentStyle;
-
-    void printOutStatistic(std::ostream &stream);
 };

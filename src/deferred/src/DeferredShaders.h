@@ -7,14 +7,14 @@ namespace eng::dr {
 
 class DeferredPhong {
 public:
-    DeferredPhong(ent::DistantLight light, vec::Vec3F cameraPosition,
+    DeferredPhong(const ent::LightArray& lights, vec::Vec3F cameraPosition,
                   floating shine)
-        : _light(light), _cameraPosition(cameraPosition), _shine(shine)
+        : _lights(lights), _cameraPosition(cameraPosition), _shine(shine)
     {}
     ScreenPixel operator()(Fragment fragment);
 
 private:
-    ent::DistantLight _light;
+    const ent::LightArray& _lights;
     vec::Vec3F _cameraPosition;
     floating _shine;
 };

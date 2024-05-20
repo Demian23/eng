@@ -1,10 +1,9 @@
 #include "ScreenDrawer.h"
 #include "../../deferred/src/DeferredShaders.h"
-#include "../../deferred/src/GBuffer.h"
-#include "../../pipeline/src/Shaders.h"
 #include <FL/Fl.H>
 #include <FL/Fl_PNG_Image.H>
 #include <FL/fl_draw.H>
+#include <iostream>
 #include <cstdint>
 
 enum class ScreenDrawer::Focused { Target, Camera };
@@ -12,18 +11,19 @@ enum class ScreenDrawer::DrawStyle {
     Mesh,
     Lambert,
     Phong,
+    DeferredPhong,
     Texture,
     FullSpecularWithTextureAlbedo,
-    DeferredRenderingPhongWithTextures
+    DeferredPhongWithTextures
 };
 
 ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
                            eng::ent::Camera camera,
                            eng::ent::CameraProjection cameraProjection,
-                           eng::ent::DistantLight light)
+                           eng::ent::LightArray&& lights)
     : Fl_Window{width, height}, _model(std::move(model)), _camera(camera),
       _projection(cameraProjection), _pipe{_model, _camera, _projection},
-      _light{light}, screenArray{static_cast<uint64_t>(width * height)},
+      _lights{std::move(lights)}, screenArray{static_cast<uint64_t>(width * height)},
       currentFocus{Focused::Target}, currentStyle{DrawStyle::Mesh}
 {
     _pipe.setZBufferSize(static_cast<uint32_t>(width * height),
@@ -87,7 +87,7 @@ void ScreenDrawer::draw()
         _pipe.drawMesh(0, w(), 0, h(), constantColorInserter);
         break;
     case DrawStyle::Lambert: {
-        LambertShader shader{_light, verticesInWorldSpace.cbegin(), albedo,
+        LambertShader shader{_lights, verticesInWorldSpace.cbegin(), albedo,
                              colorInserter};
         _pipe.rasterize(viewportVerticesIt, shader);
         break;
@@ -95,16 +95,44 @@ void ScreenDrawer::draw()
     case DrawStyle::Phong: {
         if (normalsInWorldSpace.empty())
             break;
-        PhongShader shader{_light,
+        PhongShader shader{_lights,
                            verticesInWorldSpace.cbegin(),
                            normalsInWorldSpace.cbegin(),
                            albedo,
                            eye,
                            shine,
                            colorInserter};
+        auto start = std::chrono::high_resolution_clock::now();
         _pipe.rasterize(viewportVerticesIt, shader);
+        auto end = std::chrono::high_resolution_clock::now();
+        std::cout << "Forward phong " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
         break;
     }
+    case DrawStyle::DeferredPhong:
+        if(!normalsInWorldSpace.empty()){
+            dr::GBuffer gBuffer{
+                screenArray.size(),
+                static_cast<uint32_t>(w()),
+                ConstantAlbedo{albedo},
+                NormalInterpolation{normalsInWorldSpace.cbegin()},
+                FullSpecularProperties{},
+                verticesInWorldSpace.cbegin()};
+            dr::DeferredPhong shader{_lights, eye, shine};
+            auto start = std::chrono::high_resolution_clock::now();
+            _pipe.rasterize(viewportVerticesIt, [&](uint32_t x, uint32_t y,
+                                                    [[maybe_unused]] floating u,
+                                                    [[maybe_unused]] floating v,
+                                                    [[maybe_unused]] floating w,
+                                                    Triangle triangle) {
+              gBuffer(x, y, u, v, w, triangle);
+            }); // forward!
+            std::transform(gBuffer.cbegin(), gBuffer.cend(),
+                           screenArray.begin(),
+                           [&](auto &&fragment) { return shader(fragment); });
+            auto end = std::chrono::high_resolution_clock::now();
+            std::cout << "Deferred phong " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
+        }
+        break;
     case DrawStyle::Texture:
         if (_model.getDiffuseMap() && _model.getNormalMap() &&
             _model.getSpecularMap()) {
@@ -112,7 +140,7 @@ void ScreenDrawer::draw()
             decltype(auto) normRef = _model.getNormalMap();
             decltype(auto) specRef = _model.getSpecularMap();
             TextureShader shader{
-                _light,
+                _lights,
                 TextureAlbedo{viewportVerticesIt, textureCoordsIt,
                               diffRef->data()[0],
                               static_cast<uint32_t>(diffRef->w()),
@@ -139,7 +167,7 @@ void ScreenDrawer::draw()
         if (!normalsInWorldSpace.empty() && _model.getDiffuseMap()) {
             decltype(auto) diffRef = _model.getDiffuseMap();
             FullSpecularWithTextureAlbedo shader{
-                _light,
+                _lights,
                 TextureAlbedo{viewportVerticesIt, textureCoordsIt,
                               diffRef->data()[0],
                               static_cast<uint32_t>(diffRef->w()),
@@ -153,7 +181,7 @@ void ScreenDrawer::draw()
             _pipe.rasterize(viewportVerticesIt, shader);
         }
         break;
-    case DrawStyle::DeferredRenderingPhongWithTextures:
+    case DrawStyle::DeferredPhongWithTextures:
         if (_model.getDiffuseMap() && _model.getNormalMap() &&
             _model.getSpecularMap()) {
             decltype(auto) diffRef = _model.getDiffuseMap();
@@ -178,7 +206,7 @@ void ScreenDrawer::draw()
                                 static_cast<uint32_t>(specRef->h()),
                                 static_cast<uint8_t>(specRef->d())},
                 verticesInWorldSpace.begin()};
-            dr::DeferredPhong shader{_light, eye, shine};
+            dr::DeferredPhong shader{_lights, eye, shine};
             _pipe.rasterize(viewportVerticesIt, [&](uint32_t x, uint32_t y,
                                                     [[maybe_unused]] floating u,
                                                     [[maybe_unused]] floating v,
@@ -230,15 +258,18 @@ int ScreenDrawer::handle(int event)
                 currentStyle = DrawStyle::Phong;
                 break;
             case DrawStyle::Phong:
+                currentStyle = DrawStyle::DeferredPhong;
+                break;
+            case DrawStyle::DeferredPhong:
                 currentStyle = DrawStyle::Texture;
                 break;
             case DrawStyle::Texture:
                 currentStyle = DrawStyle::FullSpecularWithTextureAlbedo;
                 break;
             case DrawStyle::FullSpecularWithTextureAlbedo:
-                currentStyle = DrawStyle::DeferredRenderingPhongWithTextures;
+                currentStyle = DrawStyle::DeferredPhongWithTextures;
                 break;
-            case DrawStyle::DeferredRenderingPhongWithTextures:
+            case DrawStyle::DeferredPhongWithTextures:
                 currentStyle = DrawStyle::Mesh;
                 break;
             }

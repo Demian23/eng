@@ -6,6 +6,7 @@
 #include <FL/Fl_PNG_Image.H>
 #include <algorithm>
 #include <cxxopts.hpp>
+#include <memory>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -16,7 +17,7 @@ std::string readArgsAndReturnPathToObj(
     int argc, const char *argv[], eng::ent::Model &modelForInit,
     eng::ent::Camera &cameraForInit,
     eng::ent::CameraProjection &projectionForInit,
-    eng::ent::DistantLight &lightForInit, bool &isAutoPositioning);
+    eng::ent::LightArray &lightsForInit, bool &isAutoPositioning);
 
 void addTextureMaps(eng::ent::Model &model, std::string_view diffuseMapPath,
                     std::string_view normalMapPath,
@@ -25,6 +26,7 @@ void autoPositioning(eng::ent::Model &model, eng::ent::Camera &camera,
                      eng::ent::CameraProjection &projection);
 
 void initModel(std::string_view pathToObj, eng::ent::Model &model);
+void getDirectionalLights(eng::ent::LightArray& lights, std::vector<eng::floating> lightsParams);
 
 void exceptionHandler();
 
@@ -39,18 +41,18 @@ int main(int argc, const char *argv[])
         eng::ent::Camera camera{};
         eng::ent::CameraProjection projection{static_cast<eng::floating>(w),
                                               static_cast<eng::floating>(h)};
-        eng::ent::DistantLight light{};
+        eng::ent::LightArray lights{};
         bool isAutoPositioning{false};
 
         auto path = readArgsAndReturnPathToObj(
-            argc, argv, model, camera, projection, light, isAutoPositioning);
+            argc, argv, model, camera, projection, lights, isAutoPositioning);
         initModel(path, model);
 
         if (isAutoPositioning)
             autoPositioning(model, camera, projection);
 
         ScreenDrawer drawer{w,      h - 20,     std::move(model),
-                            camera, projection, light};
+                            camera, projection, std::move(lights)};
         drawer.end();
         drawer.show();
         return Fl::run();
@@ -107,7 +109,7 @@ std::string readArgsAndReturnPathToObj(
     int argc, const char *argv[], eng::ent::Model &modelForInit,
     eng::ent::Camera &cameraForInit,
     eng::ent::CameraProjection &projectionForInit,
-    eng::ent::DistantLight &lightForInit, bool &isAutoPositioning)
+    eng::ent::LightArray &lightsForInit, bool &isAutoPositioning)
 {
 
     cxxopts::Options options("Executive",
@@ -124,9 +126,6 @@ std::string readArgsAndReturnPathToObj(
         cxxopts::value<std::vector<eng::floating>>()->default_value("1,1,1"))(
         "f,fov", "Fov angle in projection matrix",
         cxxopts::value<eng::floating>())(
-        "l,light-color", "Light color",
-        cxxopts::value<std::vector<eng::floating>>()->default_value(
-            "255,255,255"))("light-type", "Light type: directional")(
         "albedo", "Albedo as vector with 3 float in range 0 to 1",
         cxxopts::value<std::vector<eng::floating>>()->default_value(
             "0.18,0.18,0.18"))("diffuse-map", "Path to diffuse map for model",
@@ -136,9 +135,8 @@ std::string readArgsAndReturnPathToObj(
                                        "Path to normal map for model",
                                        cxxopts::value<std::string>())(
         "shine-power", "Shine power coefficient in Phong",
-        cxxopts::value<eng::floating>())("light-intensity",
-                                         "Light intensity, value from 0 to 1",
-                                         cxxopts::value<eng::floating>());
+        cxxopts::value<eng::floating>())
+        ("directional-lights","Array of lights in notation: light-direction vector, light color, light intensity. Example: 0,0,1.0,255,255,255,0.8,1,0,0,1,1,1,0.2 -> two light sources", cxxopts::value<std::vector<eng::floating>>()->default_value("0,0,1,255,255,255,0.2"));
 
     options.parse_positional({"source"});
 
@@ -157,8 +155,8 @@ std::string readArgsAndReturnPathToObj(
     auto vecToVec3F = [](const std::vector<eng::floating> &vec) {
         return eng::vec::Vec3F{vec.at(0), vec.at(1), vec.at(2)};
     };
-    lightForInit.color =
-        vecToVec3F(result["light-color"].as<std::vector<eng::floating>>());
+    // TODO get light sources
+    getDirectionalLights(lightsForInit, result["directional-lights"].as<std::vector<eng::floating>>());
     modelForInit.setAlbedo(
         vecToVec3F(result["albedo"].as<std::vector<eng::floating>>()));
     if (result.count("fov"))
@@ -175,9 +173,6 @@ std::string readArgsAndReturnPathToObj(
     }
     if (result.count("shine-power")) {
         modelForInit.setShinePower(result["shine-power"].as<eng::floating>());
-    }
-    if (result.count("light-intensity")) {
-        lightForInit.intensity = result["light-intensity"].as<eng::floating>();
     }
     addTextureMaps(modelForInit, diffuseMap, normalMap, specularMap);
 
@@ -265,3 +260,17 @@ std::unique_ptr<Fl_RGB_Image> getRGBImage(std::string_view pathToImage)
     }
     return nullptr;
 }
+
+void getDirectionalLights(eng::ent::LightArray& lights, std::vector<eng::floating> lightsParams){
+    auto size = lightsParams.size();
+    if((size % 7) != 0){
+        throw std::logic_error{"Wrong directional lights params count"};
+    }
+    for(unsigned i = 0; i < size; i+=7 ){
+        auto direction = eng::vec::Vec3F {lightsParams[i], lightsParams[i+1], lightsParams[i+2]};
+        auto color = eng::vec::Vec3F {lightsParams[i+3], lightsParams[i+4], lightsParams[i+5]};
+        auto intensity = lightsParams[i+6];
+        lights.push_back(std::make_unique<eng::ent::DistantLight>(direction, color, intensity));
+    }
+}
+
