@@ -3,10 +3,7 @@
 #include "../../algorithm/src/alg.h"
 #include "../../entities/src/Camera.h"
 #include "../../entities/src/CameraProjection.h"
-#include "../../entities/src/Light.h"
 #include "../../entities/src/Model.h"
-
-#include <numbers>
 
 namespace eng::pipe {
 

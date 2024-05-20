@@ -10,7 +10,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <istream>
 #include <stdexcept>
 
 std::string readArgsAndReturnPathToObj(
@@ -135,10 +134,11 @@ std::string readArgsAndReturnPathToObj(
         "normal-map", "Path to normal map for model",
         cxxopts::value<std::string>())("specular-map",
                                        "Path to normal map for model",
-                                       cxxopts::value<std::string>())
-        ("shine-power", "Shine power coefficient in Phong", cxxopts::value<eng::floating>())
-        ("light-intensity", "Light intensity, value from 0 to 1", cxxopts::value<eng::floating>())
-        ;
+                                       cxxopts::value<std::string>())(
+        "shine-power", "Shine power coefficient in Phong",
+        cxxopts::value<eng::floating>())("light-intensity",
+                                         "Light intensity, value from 0 to 1",
+                                         cxxopts::value<eng::floating>());
 
     options.parse_positional({"source"});
 
@@ -173,11 +173,11 @@ std::string readArgsAndReturnPathToObj(
     if (result.count("specular-map")) {
         specularMap = result["specular-map"].as<std::string>();
     }
-    if(result.count("shine-power")){
+    if (result.count("shine-power")) {
         modelForInit.setShinePower(result["shine-power"].as<eng::floating>());
     }
-    if(result.count("light-intensity")){
-       lightForInit.intensity = result["light-intensity"].as<eng::floating>();
+    if (result.count("light-intensity")) {
+        lightForInit.intensity = result["light-intensity"].as<eng::floating>();
     }
     addTextureMaps(modelForInit, diffuseMap, normalMap, specularMap);
 
@@ -204,7 +204,7 @@ void initModel(std::string_view pathToObj, eng::ent::Model &model)
         throw std::logic_error(std::string(pathToObj) + " is not regular file");
     }
 
-    objFile.open(pathToObj);
+    objFile.open(pathToObj.data());
     if (objFile.bad()) {
         throw std::logic_error{"Can't open " + std::string(pathToObj) +
                                " for read"};

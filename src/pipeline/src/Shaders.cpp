@@ -76,8 +76,7 @@ vec::Vec3F NormalForTriangleWithCaching::operator()(
                               (u / aW + v / bW + w / cW)),
         static_cast<uint64_t>(0), static_cast<uint64_t>(_height));
 
-    auto offset =
-        static_cast<uint64_t>(((y * _width + x) * _channel)); // maybe round
+    auto offset = (y * _width + x) * _channel; // maybe round
     auto rgbPtr = _textureData + offset;
 
     auto r = static_cast<uint8_t>(rgbPtr[0]);

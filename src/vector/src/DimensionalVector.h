@@ -2,7 +2,9 @@
 #include "../../base/src/eng.h"
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <numeric>
+#include <utility>
 
 namespace eng::vec {
 

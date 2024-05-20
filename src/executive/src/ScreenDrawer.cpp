@@ -1,6 +1,11 @@
 #include "ScreenDrawer.h"
+#include "../../deferred/src/DeferredShaders.h"
+#include "../../deferred/src/GBuffer.h"
 #include "../../pipeline/src/Shaders.h"
-#include "FL/Fl_PNG_Image.H"
+#include <FL/Fl.H>
+#include <FL/Fl_PNG_Image.H>
+#include <FL/fl_draw.H>
+#include <cstdint>
 
 enum class ScreenDrawer::Focused { Target, Camera };
 enum class ScreenDrawer::DrawStyle {
@@ -9,6 +14,7 @@ enum class ScreenDrawer::DrawStyle {
     Phong,
     Texture,
     FullSpecularWithTextureAlbedo,
+    DeferredRenderingPhongWithTextures
 };
 
 ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
@@ -26,27 +32,33 @@ ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
 
 void ScreenDrawer::draw()
 {
+    using eng::ent::PixelArray;
+    using namespace eng;
+    using namespace eng::shader;
+
     screenArray.fill({0, 0, 0});
-    RGB color =
-        currentFocus == Focused::Camera ? RGB{0, 0, 255} : RGB{0, 255, 0};
+    eng::ent::PixelArray::pixel color = currentFocus == Focused::Camera
+                                            ? PixelArray::pixel{0, 0, 255}
+                                            : PixelArray::pixel{0, 255, 0};
     auto verticesInViewportSpace =
         _pipe.applyVertexTransformations(0, w(), 0, h());
     auto viewportVerticesIt = verticesInViewportSpace.cbegin();
     auto colorInserter = [=, this, xSize = static_cast<uint32_t>(w())](
-                             long long x, long long y, eng::vec::Vec3F color) {
-        screenArray[static_cast<uint32_t>(y) * xSize +
-                    static_cast<uint32_t>(x)] = {
-            static_cast<uint8_t>(color[0]), static_cast<uint8_t>(color[1]),
-            static_cast<uint8_t>(color[2])};
+                             long long x, long long y,
+                             eng::vec::Vec3F targetColor) {
+        uint64_t index =
+            static_cast<uint32_t>(y) * xSize + static_cast<uint32_t>(x);
+        PixelArray::pixel value = {static_cast<uint8_t>(targetColor[0]),
+                                   static_cast<uint8_t>(targetColor[1]),
+                                   static_cast<uint8_t>(targetColor[2])};
+        screenArray.trySetPixel(index, value);
     };
     auto constantColorInserter =
         [inserter = colorInserter,
-         colorAsFloat = eng::vec::Vec3F{static_cast<eng::floating>(color.r),
-                                        static_cast<eng::floating>(color.g),
-                                        static_cast<eng::floating>(color.b)}](
+         colorAsFloat = eng::vec::Vec3F{static_cast<eng::floating>(color[0]),
+                                        static_cast<eng::floating>(color[1]),
+                                        static_cast<eng::floating>(color[2])}](
             long long x, long long y) { inserter(x, y, colorAsFloat); };
-    using namespace eng;
-    using namespace eng::shader;
     auto albedo = _model.getAlbedo();
     auto eye = _camera.getEye();
     auto shine = _model.getShinePower();
@@ -141,23 +153,46 @@ void ScreenDrawer::draw()
             _pipe.rasterize(viewportVerticesIt, shader);
         }
         break;
+    case DrawStyle::DeferredRenderingPhongWithTextures:
+        if (_model.getDiffuseMap() && _model.getNormalMap() &&
+            _model.getSpecularMap()) {
+            decltype(auto) diffRef = _model.getDiffuseMap();
+            decltype(auto) normRef = _model.getNormalMap();
+            decltype(auto) specRef = _model.getSpecularMap();
+            dr::GBuffer gBuffer{
+                screenArray.size(),
+                static_cast<uint32_t>(w()),
+                TextureAlbedo{viewportVerticesIt, textureCoordsIt,
+                              diffRef->data()[0],
+                              static_cast<uint32_t>(diffRef->w()),
+                              static_cast<uint32_t>(diffRef->h()),
+                              static_cast<uint8_t>(diffRef->d())},
+                TextureNormal{modelMatrix, viewportVerticesIt, textureCoordsIt,
+                              normRef->data()[0],
+                              static_cast<uint32_t>(normRef->w()),
+                              static_cast<uint32_t>(normRef->h()),
+                              static_cast<uint8_t>(normRef->d())},
+                TextureSpecular{viewportVerticesIt, textureCoordsIt,
+                                specRef->data()[0],
+                                static_cast<uint32_t>(specRef->w()),
+                                static_cast<uint32_t>(specRef->h()),
+                                static_cast<uint8_t>(specRef->d())},
+                verticesInWorldSpace.begin()};
+            dr::DeferredPhong shader{_light, eye, shine};
+            _pipe.rasterize(viewportVerticesIt, [&](uint32_t x, uint32_t y,
+                                                    [[maybe_unused]] floating u,
+                                                    [[maybe_unused]] floating v,
+                                                    [[maybe_unused]] floating w,
+                                                    Triangle triangle) {
+                gBuffer(x, y, u, v, w, triangle);
+            }); // forward!
+            std::transform(gBuffer.cbegin(), gBuffer.cend(),
+                           screenArray.begin(),
+                           [&](auto &&fragment) { return shader(fragment); });
+        }
     }
-    fl_draw_image(screenArray.data(), 0, 0, w(), h(), 3);
-}
 
-void ScreenDrawer::printOutStatistic(std::ostream &stream)
-{
-    auto [cameraX, cameraY, cameraZ] =
-        static_cast<std::array<eng::floating, 3>>(_camera.getEye());
-    auto [targetX, targetY, targetZ] =
-        static_cast<std::array<eng::floating, 3>>(_camera.getTarget());
-    auto [diagonal, azimuth, polar] = static_cast<std::array<eng::floating, 3>>(
-        eng::vec::cartesianToSpherical(_camera.getEye()));
-    stream << "Camera: " << cameraX << ' ' << cameraY << ' ' << cameraZ << '\n'
-           << "Target: " << targetX << ' ' << targetY << ' ' << targetZ << '\n'
-           << "Camera (diagonal azimuth polar): " << diagonal << ' '
-           << eng::radianToDegree(azimuth) << ' ' << eng::radianToDegree(polar)
-           << '\n';
+    fl_draw_image(screenArray.data(), 0, 0, w(), h(), 3);
 }
 
 int ScreenDrawer::handle(int event)
@@ -178,7 +213,6 @@ int ScreenDrawer::handle(int event)
         MoveY = 'u',
         MoveZ = 'f',
         PerspectiveAngle = 'e',
-        Statistic = 'i',
         DrawingStyle = 'o'
     };
     switch (event) {
@@ -202,6 +236,9 @@ int ScreenDrawer::handle(int event)
                 currentStyle = DrawStyle::FullSpecularWithTextureAlbedo;
                 break;
             case DrawStyle::FullSpecularWithTextureAlbedo:
+                currentStyle = DrawStyle::DeferredRenderingPhongWithTextures;
+                break;
+            case DrawStyle::DeferredRenderingPhongWithTextures:
                 currentStyle = DrawStyle::Mesh;
                 break;
             }
@@ -304,9 +341,7 @@ int ScreenDrawer::handle(int event)
         }
         case MoveZ: {
             auto zComponent = _projection.getZComponent();
-            auto value = static_cast<eng::floating>(zComponent.second -
-                                                    zComponent.first) *
-                         0.05f;
+            auto value = (zComponent.second - zComponent.first) * 0.05f;
             eng::floating addition = Fl::event_shift() ? -value : value;
             if (currentFocus == Focused::Camera) {
                 _camera.moveTarget({0, 0, addition});
@@ -331,9 +366,6 @@ int ScreenDrawer::handle(int event)
                 break;
             }
             return Fl_Window::handle(event);
-        case Statistic:
-            printOutStatistic(std::cout);
-            return 1;
         default:
             return Fl_Window::handle(event);
         }

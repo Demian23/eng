@@ -1,17 +1,12 @@
 #pragma once
 
-#include "../../algorithm/src/alg.h"
 #include "../../entities/src/Camera.h"
 #include "../../entities/src/CameraProjection.h"
+#include "../../entities/src/Light.h"
 #include "../../entities/src/Model.h"
+#include "../../entities/src/PixelArray.h"
 #include "../../pipeline/src/GraphicsPipeline.h"
-#include "RGBArray.h"
-#include <FL/Fl.H>
 #include <FL/Fl_Window.H>
-#include <FL/fl_draw.H>
-#include <algorithm>
-#include <format>
-#include <ostream>
 
 class ScreenDrawer : public Fl_Window {
 public:
@@ -28,7 +23,7 @@ protected:
     eng::ent::CameraProjection _projection;
     eng::pipe::GraphicsPipeline _pipe;
     eng::ent::DistantLight _light;
-    RGBArray screenArray;
+    eng::ent::PixelArray screenArray;
     enum class Focused;
     enum class DrawStyle;
     Focused currentFocus;

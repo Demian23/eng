@@ -3,7 +3,8 @@
 #include "../../base/src/Elements.h"
 #include "../../matrix/src/Matrix.h"
 #include "../../vector/src/DimensionalVector.h"
-#include "FL/Fl_RGB_Image.H"
+#include <FL/Fl_RGB_Image.H>
+#include <memory>
 #include <vector>
 
 namespace eng::ent {
@@ -24,7 +25,8 @@ public:
     Model()
         : _vertices{}, _normals{}, _textureCoords{}, _triangles{},
           _diffuseMap(), _normalMap(), _specularMap(), _albedo{defaultAlbedo},
-          modelMatrix{mtr::Matrix::createIdentityMatrix()}, _shinePower{defaultShinePower}
+          modelMatrix{mtr::Matrix::createIdentityMatrix()},
+          _shinePower{defaultShinePower}
     {}
     Model(std::vector<Vertex> &&vertices, std::vector<Triangle> &&polygons,
           std::vector<Normal> &&normals = {},
@@ -38,7 +40,8 @@ public:
           _textureCoords(std::move(textureCoords)), _triangles(polygons),
           _diffuseMap{std::move(diffuseMap)}, _normalMap{std::move(normalMap)},
           _specularMap{std::move(specularMap)}, _albedo{albedo},
-          modelMatrix{mtr::Matrix::createIdentityMatrix()}, _shinePower{shinePower}
+          modelMatrix{mtr::Matrix::createIdentityMatrix()},
+          _shinePower{shinePower}
     {}
 
     void reset(std::vector<Vertex> &&vertices, std::vector<Triangle> &&polygons,
@@ -66,7 +69,6 @@ public:
 
     [[nodiscard]] floating getShinePower() const noexcept;
     void setShinePower(floating newShinePower) noexcept;
-
 
     void setDiffuseMap(std::unique_ptr<Fl_RGB_Image> &&diffuse);
     void setSpecularMap(std::unique_ptr<Fl_RGB_Image> &&specular);

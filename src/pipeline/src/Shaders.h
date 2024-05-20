@@ -53,7 +53,7 @@ using vci = std::vector<Vertex>::const_iterator;
 using tci = std::vector<TextureCoord>::const_iterator;
 
 struct NormalInterpolation {
-    NormalInterpolation(nci normals) : _normals(normals) {}
+    explicit NormalInterpolation(nci normals) : _normals(normals) {}
 
     vec::Vec3F operator()([[maybe_unused]] floating u,
                           [[maybe_unused]] floating v,
@@ -65,7 +65,7 @@ private:
 };
 
 struct NormalForTriangle {
-    NormalForTriangle(vci verticesInWorldSpace)
+    explicit NormalForTriangle(vci verticesInWorldSpace)
         : _vertices(verticesInWorldSpace)
     {}
     vec::Vec3F operator()(Triangle triangle) const noexcept;
@@ -75,7 +75,7 @@ private:
 };
 
 struct NormalForTriangleWithCaching : private NormalForTriangle {
-    NormalForTriangleWithCaching(vci verticesInWorldSpace)
+    explicit NormalForTriangleWithCaching(vci verticesInWorldSpace)
         : NormalForTriangle(verticesInWorldSpace), _previousTriangle{},
           _previousNormal{NormalForTriangle::operator()(_previousTriangle)}
     {}
@@ -110,7 +110,7 @@ struct FullSpecularProperties {
 };
 
 struct ConstantAlbedo {
-    ConstantAlbedo(vec::Vec3F albedo) : _albedo(albedo) {}
+    explicit ConstantAlbedo(vec::Vec3F albedo) : _albedo(albedo) {}
 
     inline vec::Vec3F
     operator()([[maybe_unused]] floating u, [[maybe_unused]] floating v,
@@ -299,8 +299,8 @@ struct LambertShader
                   vec::Vec3F albedo, Out out)
         : Shader<Out, ConstantAlbedo, NormalForTriangleWithCaching, NoSpecular>{
               {light.color, -light.direction, light.intensity},
-              {albedo},
-              {verticesInWorldSpace},
+              ConstantAlbedo{albedo},
+              NormalForTriangleWithCaching{verticesInWorldSpace},
               NoSpecular{},
               out}
     {}
@@ -315,8 +315,8 @@ struct PhongShader : Shader<Out, ConstantAlbedo, NormalInterpolation,
         : Shader<Out, ConstantAlbedo, NormalInterpolation,
                  SpecularCalculation<FullSpecularProperties>>{
               light,
-              {albedo},
-              {normalsInWorldSpace},
+              ConstantAlbedo{albedo},
+              NormalInterpolation{normalsInWorldSpace},
               {eye, verticesInWorldSpace, shine, FullSpecularProperties{}},
               out}
     {}
@@ -352,7 +352,7 @@ public:
                  SpecularCalculation<FullSpecularProperties>>{
               light,
               albedo,
-              {normalsInWorldSpace},
+              NormalInterpolation{normalsInWorldSpace},
               {eye, verticesInWorldSpace, shine, FullSpecularProperties{}},
               out}
     {}

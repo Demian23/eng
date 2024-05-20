@@ -5,7 +5,9 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <concepts>
+#include <cstdint>
+#include <functional>
+#include <utility>
 
 namespace eng::alg {
 

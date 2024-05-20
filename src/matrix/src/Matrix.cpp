@@ -168,10 +168,9 @@ Matrix Matrix::getPerspectiveProjectionWithAngle(floating degreeInRad,
 {
     Matrix result{};
     auto zDiff = zMin - zMax;
-    auto angle = static_cast<floating>(degreeInRad / 2);
-    result.matrix_[0][0] =
-        static_cast<floating>(1 / (aspect * std::tan(angle)));
-    result.matrix_[1][1] = static_cast<floating>(1 / std::tan(angle));
+    auto angle = degreeInRad / 2;
+    result.matrix_[0][0] = 1 / (aspect * std::tan(angle));
+    result.matrix_[1][1] = 1 / std::tan(angle);
     result.matrix_[2][2] = zMax / zDiff;
     result.matrix_[2][3] = zMin * zMax / zDiff;
     result.matrix_[3][2] = -1;
