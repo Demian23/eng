@@ -20,10 +20,9 @@ template <shader::AlbedoProvider AlbedoProv, shader::NormalProvider NormalProv,
 class GBuffer {
 public:
     GBuffer(std::size_t gBufferSize, uint32_t xSize, AlbedoProv albedo,
-            NormalProv normal, SpecularProv specular,
-            shader::vci verticesInWorldSpace)
+            NormalProv normal, SpecularProv specular)
         : _gBuffer(gBufferSize), _albedo(albedo), _normal(normal),
-          _specular(specular), _vertices(verticesInWorldSpace), _xSize(xSize)
+          _specular(specular),  _xSize(xSize)
     {}
     GBuffer(const GBuffer &) = delete;
     GBuffer &operator=(const GBuffer &) = delete;
@@ -38,6 +37,7 @@ public:
             auto albedo = _albedo(u, v, w, triangle);
             auto normal = _normal(u, v, w, triangle);
             auto specular = _specular(u, v, w, triangle);
+            auto _vertices = _specular.getVerticesInWorldSpace();
             auto aInWorldSpace = *(_vertices + triangle[0].vertexOffset);
             auto bInWorldSpace = *(_vertices + triangle[1].vertexOffset);
             auto cInWorldSpace = *(_vertices + triangle[2].vertexOffset);
@@ -57,7 +57,6 @@ private:
     AlbedoProv _albedo;
     NormalProv _normal;
     SpecularProv _specular;
-    shader::vci _vertices;
     uint32_t _xSize;
 };
 

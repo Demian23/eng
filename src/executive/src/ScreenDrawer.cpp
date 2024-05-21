@@ -9,7 +9,6 @@
 enum class ScreenDrawer::Focused { Target, Camera };
 enum class ScreenDrawer::DrawStyle {
     Mesh,
-    Lambert,
     Phong,
     DeferredPhong,
     Texture,
@@ -86,16 +85,10 @@ void ScreenDrawer::draw()
     case DrawStyle::Mesh:
         _pipe.drawMesh(0, w(), 0, h(), constantColorInserter);
         break;
-    case DrawStyle::Lambert: {
-        LambertShader shader{_lights, verticesInWorldSpace.cbegin(), albedo,
-                             colorInserter};
-        _pipe.rasterize(viewportVerticesIt, shader);
-        break;
-    }
     case DrawStyle::Phong: {
         if (normalsInWorldSpace.empty())
             break;
-        PhongShader shader{_lights,
+        NoTexturePhongShader shader{_lights,
                            verticesInWorldSpace.cbegin(),
                            normalsInWorldSpace.cbegin(),
                            albedo,
@@ -115,8 +108,8 @@ void ScreenDrawer::draw()
                 static_cast<uint32_t>(w()),
                 ConstantAlbedo{albedo},
                 NormalInterpolation{normalsInWorldSpace.cbegin()},
-                FullSpecularProperties{},
-                verticesInWorldSpace.cbegin()};
+                FullSpecularProperties{eye, verticesInWorldSpace.cbegin(), shine},
+                };
             dr::DeferredPhong shader{_lights, eye, shine};
             auto start = std::chrono::high_resolution_clock::now();
             _pipe.rasterize(viewportVerticesIt, [&](uint32_t x, uint32_t y,
@@ -155,10 +148,9 @@ void ScreenDrawer::draw()
                                 specRef->data()[0],
                                 static_cast<uint32_t>(specRef->w()),
                                 static_cast<uint32_t>(specRef->h()),
-                                static_cast<uint8_t>(specRef->d())},
+                                static_cast<uint8_t>(specRef->d()),eye,
                 verticesInWorldSpace.cbegin(),
-                eye,
-                shine,
+                shine},
                 colorInserter};
             _pipe.rasterize(viewportVerticesIt, shader);
         }
@@ -204,8 +196,7 @@ void ScreenDrawer::draw()
                                 specRef->data()[0],
                                 static_cast<uint32_t>(specRef->w()),
                                 static_cast<uint32_t>(specRef->h()),
-                                static_cast<uint8_t>(specRef->d())},
-                verticesInWorldSpace.begin()};
+                                static_cast<uint8_t>(specRef->d()), eye, verticesInWorldSpace.cbegin(), shine}};
             dr::DeferredPhong shader{_lights, eye, shine};
             _pipe.rasterize(viewportVerticesIt, [&](uint32_t x, uint32_t y,
                                                     [[maybe_unused]] floating u,
@@ -219,7 +210,6 @@ void ScreenDrawer::draw()
                            [&](auto &&fragment) { return shader(fragment); });
         }
     }
-
     fl_draw_image(screenArray.data(), 0, 0, w(), h(), 3);
 }
 
@@ -252,9 +242,6 @@ int ScreenDrawer::handle(int event)
         case DrawingStyle:
             switch (currentStyle) {
             case DrawStyle::Mesh:
-                currentStyle = DrawStyle::Lambert;
-                break;
-            case DrawStyle::Lambert:
                 currentStyle = DrawStyle::Phong;
                 break;
             case DrawStyle::Phong:

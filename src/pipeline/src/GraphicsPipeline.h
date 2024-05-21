@@ -19,7 +19,7 @@ class GraphicsPipeline final {
 public:
     GraphicsPipeline(ent::Model &model, ent::Camera &camera,
                      ent::CameraProjection &projection);
-
+    [[nodiscard]] vec::Vec4F applyVertexTransformationFromWorldSpace(int minX, int maxX, int minY, int maxY, vec::Vec4F vertex);
     [[nodiscard]] std::vector<Vertex>
     applyVertexTransformations(int minX, int maxX, int minY,
                                int maxY) const noexcept;

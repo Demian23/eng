@@ -16,6 +16,7 @@ public:
                  eng::ent::LightArray&& lights);
     void draw() override;
     int handle(int) override;
+    void drawLightSource(eng::ent::Light* light);
 
 protected:
     eng::ent::Model _model;

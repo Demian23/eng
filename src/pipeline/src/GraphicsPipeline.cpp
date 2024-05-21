@@ -9,6 +9,25 @@ GraphicsPipeline::GraphicsPipeline(ent::Model &model, ent::Camera &camera,
       _xSize{}, _projectionType{ent::ProjectionType::Perspective}
 {}
 
+[[nodiscard]] vec::Vec4F GraphicsPipeline::applyVertexTransformationFromWorldSpace(int minX, int maxX, int minY, int maxY, vec::Vec4F vertex){
+    auto transformationMatrix =
+        mtr::Matrix::getViewport(
+            static_cast<floating>(minX), static_cast<floating>(maxX),
+            static_cast<floating>(minY), static_cast<floating>(maxY)) *
+        _projection.getProjectionMatrix(_projectionType) *
+        _camera.getViewMatrix();
+    vertex = transformationMatrix * vertex;
+    if(_projectionType == eng::ent::ProjectionType::Perspective){
+        std::transform(vertex.begin(), vertex.end() - 1, vertex.begin(),
+                       [w = *vertex.rbegin()](auto &&coord) {
+                         // if you brave enough, you can erase branch here
+                         // and leave coord /= w, but zero division is
+                         // undefined behaviour, remember
+                         return w > 0 ? coord /= w : coord;
+                       });
+    }
+    return vertex;
+}
 [[nodiscard]] std::vector<Vertex>
 GraphicsPipeline::applyVertexTransformations(int minX, int maxX, int minY,
                                              int maxY) const noexcept

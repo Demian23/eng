@@ -27,6 +27,7 @@ void autoPositioning(eng::ent::Model &model, eng::ent::Camera &camera,
 
 void initModel(std::string_view pathToObj, eng::ent::Model &model);
 void getDirectionalLights(eng::ent::LightArray& lights, std::vector<eng::floating> lightsParams);
+void getPointLights(eng::ent::LightArray& lights, std::vector<eng::floating> lightsParams);
 
 void exceptionHandler();
 
@@ -87,6 +88,8 @@ void autoPositioning(eng::ent::Model &model, eng::ent::Camera &camera,
     model.addModelTransformation(
         eng::mtr::Matrix::getMove({0, -modelHeight / 2, -modelThickness / 2}));
 
+    std::cout << "Height: " << modelHeight << " Width: " << modelWidth << " Thickness: " << modelThickness << std::endl;
+
     projection.setZComponent(0.01f, std::max(modelThickness * 10, 100.f));
 
     eng::floating diagonalForCircumscribedParallelepiped =
@@ -136,7 +139,8 @@ std::string readArgsAndReturnPathToObj(
                                        cxxopts::value<std::string>())(
         "shine-power", "Shine power coefficient in Phong",
         cxxopts::value<eng::floating>())
-        ("directional-lights","Array of lights in notation: light-direction vector, light color, light intensity. Example: 0,0,1.0,255,255,255,0.8,1,0,0,1,1,1,0.2 -> two light sources", cxxopts::value<std::vector<eng::floating>>()->default_value("0,0,1,255,255,255,0.2"));
+        ("directional-lights","Array of lights in notation: light-direction vector, light color, light intensity. Example: 0,0,1.0,255,255,255,0.8,1,0,0,1,1,1,0.2 -> two light sources", cxxopts::value<std::vector<eng::floating>>())
+        ("point-lights","Array of lights in notation: light position vector, light color, light intensity, light attenuation params (constant, linear, exp). Example: 0,0,1.0,255,255,255,0.8,1,0.2,0.7 -> one light sources", cxxopts::value<std::vector<eng::floating>>());
 
     options.parse_positional({"source"});
 
@@ -156,7 +160,14 @@ std::string readArgsAndReturnPathToObj(
         return eng::vec::Vec3F{vec.at(0), vec.at(1), vec.at(2)};
     };
     // TODO get light sources
-    getDirectionalLights(lightsForInit, result["directional-lights"].as<std::vector<eng::floating>>());
+    if(result.count("directional-lights")) {
+        getDirectionalLights(
+            lightsForInit,
+            result["directional-lights"].as<std::vector<eng::floating>>());
+    }
+    if(result.count("point-lights")){
+        getPointLights(lightsForInit, result["point-lights"].as<std::vector<eng::floating>>());
+    }
     modelForInit.setAlbedo(
         vecToVec3F(result["albedo"].as<std::vector<eng::floating>>()));
     if (result.count("fov"))
@@ -274,3 +285,18 @@ void getDirectionalLights(eng::ent::LightArray& lights, std::vector<eng::floatin
     }
 }
 
+void getPointLights(eng::ent::LightArray& lights, std::vector<eng::floating> lightsParams){
+    auto size = lightsParams.size();
+    if((size % 10) != 0){
+        throw std::logic_error{"Wrong directional lights params count"};
+    }
+    for(unsigned i = 0; i < size; i+=10 ){
+        auto position = eng::vec::Vec3F {lightsParams[i], lightsParams[i+1], lightsParams[i+2]};
+        auto color = eng::vec::Vec3F {lightsParams[i+3], lightsParams[i+4], lightsParams[i+5]};
+        auto intensity = lightsParams[i+6];
+        auto attenuationConstant = lightsParams[i+7];
+        auto attenuationLinear = lightsParams[i+8];
+        auto attenuationExp = lightsParams[i+9];
+        lights.push_back(std::make_unique<eng::ent::PointLight>(position, color, intensity, attenuationConstant, attenuationLinear, attenuationExp));
+    }
+}
