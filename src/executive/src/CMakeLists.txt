@@ -3,4 +3,4 @@ add_executable(executive main.cpp
         ScreenDrawer.cpp
 )
 
-target_link_libraries(executive PRIVATE options warnings objparser mtr pipe deferred fltk fltk_images)
+target_link_libraries(executive PRIVATE options warnings objparser mtr pipe fltk fltk_images)

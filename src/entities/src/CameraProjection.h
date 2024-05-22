@@ -7,8 +7,6 @@ namespace eng::ent {
 
 enum class ProjectionType { Orthographic, Perspective };
 
-// TODO: remove inline
-
 class CameraProjection {
 public:
     CameraProjection() noexcept = default;

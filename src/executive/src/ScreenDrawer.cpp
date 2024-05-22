@@ -1,10 +1,10 @@
 #include "ScreenDrawer.h"
-#include "../../deferred/src/DeferredShaders.h"
+#include "../../pipeline/src/Shaders.h"
 #include <FL/Fl.H>
 #include <FL/Fl_PNG_Image.H>
 #include <FL/fl_draw.H>
-#include <iostream>
 #include <cstdint>
+#include <iostream>
 
 enum class ScreenDrawer::Focused { Target, Camera };
 enum class ScreenDrawer::DrawStyle {
@@ -22,7 +22,9 @@ ScreenDrawer::ScreenDrawer(int width, int height, eng::ent::Model &&model,
                            eng::ent::LightArray&& lights)
     : Fl_Window{width, height}, _model(std::move(model)), _camera(camera),
       _projection(cameraProjection), _pipe{_model, _camera, _projection},
-      _lights{std::move(lights)}, screenArray{static_cast<uint64_t>(width * height)},
+      _lights{std::move(lights)},
+      _screenArray{static_cast<uint64_t>(width * height)},
+      _indexBuffer(static_cast<uint64_t>(width * height), static_cast<uint32_t>(w())),
       currentFocus{Focused::Target}, currentStyle{DrawStyle::Mesh}
 {
     _pipe.setZBufferSize(static_cast<uint32_t>(width * height),
@@ -35,13 +37,20 @@ void ScreenDrawer::draw()
     using namespace eng;
     using namespace eng::shader;
 
-    screenArray.fill({0, 0, 0});
+    _screenArray.fill({0, 0, 0});
+    _indexBuffer.clean();
     eng::ent::PixelArray::pixel color = currentFocus == Focused::Camera
                                             ? PixelArray::pixel{0, 0, 255}
                                             : PixelArray::pixel{0, 255, 0};
     auto verticesInViewportSpace =
         _pipe.applyVertexTransformations(0, w(), 0, h());
     auto viewportVerticesIt = verticesInViewportSpace.cbegin();
+    auto indexColorInserter = [=, this](uint64_t  index, vec::Vec3F color){
+      PixelArray::pixel value = {static_cast<uint8_t>(color[0]),
+                                 static_cast<uint8_t>(color[1]),
+                                 static_cast<uint8_t>(color[2])};
+      _screenArray.trySetPixel(index, value);
+    };
     auto colorInserter = [=, this, xSize = static_cast<uint32_t>(w())](
                              long long x, long long y,
                              eng::vec::Vec3F targetColor) {
@@ -50,7 +59,12 @@ void ScreenDrawer::draw()
         PixelArray::pixel value = {static_cast<uint8_t>(targetColor[0]),
                                    static_cast<uint8_t>(targetColor[1]),
                                    static_cast<uint8_t>(targetColor[2])};
-        screenArray.trySetPixel(index, value);
+        _screenArray.trySetPixel(index, value);
+    };
+    auto outGenerator = [=](auto&& valueProducer){
+        return [=](uint32_t x, uint32_t y, [[maybe_unused]] floating u,
+                  [[maybe_unused]] floating v, [[maybe_unused]] floating w,
+                  Triangle triangle){colorInserter(x, y, valueProducer(u, v, w, triangle));};
     };
     auto constantColorInserter =
         [inserter = colorInserter,
@@ -81,6 +95,7 @@ void ScreenDrawer::draw()
                     vec::Vec4F{normal[0], normal[1], normal[2], 0})
                 .trim<3>();
         });
+
     switch (currentStyle) {
     case DrawStyle::Mesh:
         _pipe.drawMesh(0, w(), 0, h(), constantColorInserter);
@@ -93,37 +108,26 @@ void ScreenDrawer::draw()
                            normalsInWorldSpace.cbegin(),
                            albedo,
                            eye,
-                           shine,
-                           colorInserter};
-        auto start = std::chrono::high_resolution_clock::now();
-        _pipe.rasterize(viewportVerticesIt, shader);
-        auto end = std::chrono::high_resolution_clock::now();
-        std::cout << "Forward phong " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
+                           shine};
+        _pipe.rasterize(viewportVerticesIt, outGenerator(shader));
         break;
     }
     case DrawStyle::DeferredPhong:
         if(!normalsInWorldSpace.empty()){
-            dr::GBuffer gBuffer{
-                screenArray.size(),
-                static_cast<uint32_t>(w()),
-                ConstantAlbedo{albedo},
-                NormalInterpolation{normalsInWorldSpace.cbegin()},
-                FullSpecularProperties{eye, verticesInWorldSpace.cbegin(), shine},
-                };
-            dr::DeferredPhong shader{_lights, eye, shine};
-            auto start = std::chrono::high_resolution_clock::now();
-            _pipe.rasterize(viewportVerticesIt, [&](uint32_t x, uint32_t y,
-                                                    [[maybe_unused]] floating u,
-                                                    [[maybe_unused]] floating v,
-                                                    [[maybe_unused]] floating w,
-                                                    Triangle triangle) {
-              gBuffer(x, y, u, v, w, triangle);
-            }); // forward!
-            std::transform(gBuffer.cbegin(), gBuffer.cend(),
-                           screenArray.begin(),
-                           [&](auto &&fragment) { return shader(fragment); });
-            auto end = std::chrono::high_resolution_clock::now();
-            std::cout << "Deferred phong " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << std::endl;
+            NoTexturePhongShader shader{_lights,
+                                        verticesInWorldSpace.cbegin(),
+                                        normalsInWorldSpace.cbegin(),
+                                        albedo,
+                                        eye,
+                                        shine};
+            _pipe.rasterize(viewportVerticesIt, std::ref(_indexBuffer));
+            std::for_each(_indexBuffer.cBegin(), _indexBuffer.cEnd(), [=, index = static_cast<uint64_t>(0)](auto&& fragment)mutable{
+                auto [u, v, w, triangle]  = fragment;
+                if(triangle.cbegin()->vertexOffset != PolygonComponent::invalidOffset){
+                   indexColorInserter(index, shader(u, v, w, triangle));
+                }
+                index++;
+            });
         }
         break;
     case DrawStyle::Texture:
@@ -150,9 +154,8 @@ void ScreenDrawer::draw()
                                 static_cast<uint32_t>(specRef->h()),
                                 static_cast<uint8_t>(specRef->d()),eye,
                 verticesInWorldSpace.cbegin(),
-                shine},
-                colorInserter};
-            _pipe.rasterize(viewportVerticesIt, shader);
+                shine}};
+            _pipe.rasterize(viewportVerticesIt, outGenerator(shader));
         }
         break;
     case DrawStyle::FullSpecularWithTextureAlbedo:
@@ -168,9 +171,8 @@ void ScreenDrawer::draw()
                 verticesInWorldSpace.cbegin(),
                 normalsInWorldSpace.cbegin(),
                 eye,
-                shine,
-                colorInserter};
-            _pipe.rasterize(viewportVerticesIt, shader);
+                shine};
+            _pipe.rasterize(viewportVerticesIt, outGenerator(shader));
         }
         break;
     case DrawStyle::DeferredPhongWithTextures:
@@ -179,9 +181,9 @@ void ScreenDrawer::draw()
             decltype(auto) diffRef = _model.getDiffuseMap();
             decltype(auto) normRef = _model.getNormalMap();
             decltype(auto) specRef = _model.getSpecularMap();
-            dr::GBuffer gBuffer{
-                screenArray.size(),
-                static_cast<uint32_t>(w()),
+            _pipe.rasterize(viewportVerticesIt, std::ref(_indexBuffer));
+            TextureShader shader{
+                _lights,
                 TextureAlbedo{viewportVerticesIt, textureCoordsIt,
                               diffRef->data()[0],
                               static_cast<uint32_t>(diffRef->w()),
@@ -196,21 +198,19 @@ void ScreenDrawer::draw()
                                 specRef->data()[0],
                                 static_cast<uint32_t>(specRef->w()),
                                 static_cast<uint32_t>(specRef->h()),
-                                static_cast<uint8_t>(specRef->d()), eye, verticesInWorldSpace.cbegin(), shine}};
-            dr::DeferredPhong shader{_lights, eye, shine};
-            _pipe.rasterize(viewportVerticesIt, [&](uint32_t x, uint32_t y,
-                                                    [[maybe_unused]] floating u,
-                                                    [[maybe_unused]] floating v,
-                                                    [[maybe_unused]] floating w,
-                                                    Triangle triangle) {
-                gBuffer(x, y, u, v, w, triangle);
-            }); // forward!
-            std::transform(gBuffer.cbegin(), gBuffer.cend(),
-                           screenArray.begin(),
-                           [&](auto &&fragment) { return shader(fragment); });
+                                static_cast<uint8_t>(specRef->d()),eye,
+                                verticesInWorldSpace.cbegin(),
+                                shine}};
+            std::for_each(_indexBuffer.cBegin(), _indexBuffer.cEnd(), [=, index = static_cast<uint64_t>(0)](auto&& fragment)mutable{
+              auto [u, v, w, triangle]  = fragment;
+              if(triangle.cbegin()->vertexOffset != PolygonComponent::invalidOffset){
+                  indexColorInserter(index, shader(u, v, w, triangle));
+              }
+              index++;
+            });
         }
     }
-    fl_draw_image(screenArray.data(), 0, 0, w(), h(), 3);
+    fl_draw_image(_screenArray.data(), 0, 0, w(), h(), 3);
 }
 
 int ScreenDrawer::handle(int event)

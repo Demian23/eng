@@ -10,13 +10,12 @@ using Vertex = vec::Vec4F;
 using Normal = vec::Vec3F;
 using TextureCoord = vec::Vec3F;
 using ScreenPixel = vec::Vec3<uint8_t>;
-using Specular = vec::Vec3F;
 
 struct PolygonComponent {
     constexpr static ssize_t invalidOffset = -1;
-    ssize_t vertexOffset{};
-    ssize_t normalOffset{};
-    ssize_t textureCoordinatesOffset{};
+    ssize_t vertexOffset{invalidOffset};
+    ssize_t normalOffset{invalidOffset};
+    ssize_t textureCoordinatesOffset{invalidOffset};
 };
 
 inline bool operator==(const PolygonComponent a, const PolygonComponent b)

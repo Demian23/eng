@@ -159,7 +159,6 @@ std::string readArgsAndReturnPathToObj(
     auto vecToVec3F = [](const std::vector<eng::floating> &vec) {
         return eng::vec::Vec3F{vec.at(0), vec.at(1), vec.at(2)};
     };
-    // TODO get light sources
     if(result.count("directional-lights")) {
         getDirectionalLights(
             lightsForInit,

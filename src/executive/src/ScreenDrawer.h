@@ -4,7 +4,7 @@
 #include "../../entities/src/CameraProjection.h"
 #include "../../entities/src/Light.h"
 #include "../../entities/src/Model.h"
-#include "../../entities/src/PixelArray.h"
+#include "../../entities/src/Buffers.h"
 #include "../../pipeline/src/GraphicsPipeline.h"
 #include <FL/Fl_Window.H>
 
@@ -16,7 +16,6 @@ public:
                  eng::ent::LightArray&& lights);
     void draw() override;
     int handle(int) override;
-    void drawLightSource(eng::ent::Light* light);
 
 protected:
     eng::ent::Model _model;
@@ -24,7 +23,8 @@ protected:
     eng::ent::CameraProjection _projection;
     eng::pipe::GraphicsPipeline _pipe;
     eng::ent::LightArray _lights;
-    eng::ent::PixelArray screenArray;
+    eng::ent::PixelArray _screenArray;
+    eng::ent::IndexBuffer _indexBuffer;
     enum class Focused;
     enum class DrawStyle;
     Focused currentFocus;

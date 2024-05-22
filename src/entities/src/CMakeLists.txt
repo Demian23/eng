@@ -4,5 +4,7 @@ add_library(ent STATIC Camera.cpp Camera.h
         CameraProjection.h
         Model.h
         Model.cpp
-        Light.h)
+        Light.h
+        Buffers.cpp
+        Buffers.h)
 target_link_libraries(ent PUBLIC options warnings vec)

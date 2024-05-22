@@ -7,14 +7,6 @@
 namespace eng::shader {
 
 template <typename T>
-concept ShaderOut =
-    std::invocable<T, uint32_t, uint32_t, vec::Vec3F> && requires(T out) {
-        {
-            out({}, {}, {})
-        } -> std::same_as<void>;
-    };
-
-template <typename T>
 concept AlbedoProvider =
     std::invocable<T, floating, floating, floating, Triangle> &&
     requires(T provider) {
@@ -210,19 +202,17 @@ private:
 
 };
 
-template <ShaderOut Out, AlbedoProvider Albedo, NormalProvider Normal,
+template <AlbedoProvider Albedo, NormalProvider Normal,
           SpecularPropertiesProvider Specular>
 struct PhongShader {
     PhongShader(const ent::LightArray& lights, Albedo albedo, Normal normal,
-           Specular specular, Out out)
-        : _lights(lights), _albedo(albedo), _normal(normal), _specular(specular),
-          _out(out)
+           Specular specular)
+        : _lights(lights), _albedo(albedo), _normal(normal), _specular(specular)
     {}
 
-    void operator()(uint32_t x, uint32_t y, [[maybe_unused]] floating u,
+    [[nodiscard]] vec::Vec3F operator()([[maybe_unused]] floating u,
                     [[maybe_unused]] floating v, [[maybe_unused]] floating w,
-                    Triangle triangle) const noexcept
-    {
+                    Triangle triangle) const noexcept{
         auto albedo = _albedo(u, v, w, triangle);
         auto normal = _normal(u, v, w, triangle);
         auto specularProperties= _specular(u, v, w, triangle);
@@ -248,18 +238,17 @@ struct PhongShader {
             specularIntensity += specular;
         }
 
-        vec::Vec3F resultColor{
+        return vec::Vec3F {
             std::clamp(diffuseIntensity[0] + ambientIntensity[0] +
-                           specularIntensity[0],
+                       specularIntensity[0],
                        0.f, 255.f),
             std::clamp(diffuseIntensity[1] + ambientIntensity[1] +
-                           specularIntensity[1],
+                       specularIntensity[1],
                        0.f, 255.f),
             std::clamp(diffuseIntensity[2] + ambientIntensity[2] +
-                           specularIntensity[2],
+                       specularIntensity[2],
                        0.f, 255.f),
         };
-        _out(x, y, resultColor);
     }
 
 private:
@@ -267,57 +256,49 @@ private:
     Albedo _albedo;
     Normal _normal;
     Specular _specular;
-    Out _out;
 };
 
 
-template <ShaderOut Out>
-struct NoTexturePhongShader : PhongShader<Out, ConstantAlbedo, NormalInterpolation,
+struct NoTexturePhongShader : PhongShader<ConstantAlbedo, NormalInterpolation,
                             FullSpecularProperties> {
     NoTexturePhongShader(const ent::LightArray& lights, vci verticesInWorldSpace,
                 nci normalsInWorldSpace, vec::Vec3F albedo, vec::Vec3F eye,
-                floating shine, Out out)
-        : PhongShader<Out, ConstantAlbedo, NormalInterpolation,
+                floating shine)
+        : PhongShader<ConstantAlbedo, NormalInterpolation,
                  FullSpecularProperties>{
               lights,
               ConstantAlbedo{albedo},
               NormalInterpolation{normalsInWorldSpace},
-              FullSpecularProperties{eye, verticesInWorldSpace, shine},
-              out}
+              FullSpecularProperties{eye, verticesInWorldSpace, shine}}
     {}
 };
 
-template <ShaderOut Out>
-struct TextureShader : PhongShader<Out, TextureAlbedo, TextureNormal, TextureSpecular> {
+struct TextureShader : PhongShader<TextureAlbedo, TextureNormal, TextureSpecular> {
     TextureShader(const ent::LightArray& lights, TextureAlbedo albedo,
-                  TextureNormal normal, TextureSpecular specular,
-                  Out out)
-        : PhongShader<Out, TextureAlbedo, TextureNormal,
+                  TextureNormal normal, TextureSpecular specular)
+        : PhongShader<TextureAlbedo, TextureNormal,
                  TextureSpecular>{
               lights,
               albedo,
               normal,
-              specular,
-              out}
+              specular}
     {}
 };
 
-template <ShaderOut Out>
 struct FullSpecularWithTextureAlbedo
-    : PhongShader<Out, TextureAlbedo, NormalInterpolation,
+    : PhongShader<TextureAlbedo, NormalInterpolation,
              FullSpecularProperties> {
 public:
     FullSpecularWithTextureAlbedo(const ent::LightArray& lights, TextureAlbedo albedo,
                                   vci verticesInWorldSpace,
                                   nci normalsInWorldSpace, vec::Vec3F eye,
-                                  floating shine, Out out)
-        : PhongShader<Out, TextureAlbedo, NormalInterpolation,
+                                  floating shine)
+        : PhongShader<TextureAlbedo, NormalInterpolation,
                  FullSpecularProperties>{
               lights,
               albedo,
               NormalInterpolation{normalsInWorldSpace},
-              FullSpecularProperties{eye, verticesInWorldSpace, shine},
-              out}
+              FullSpecularProperties{eye, verticesInWorldSpace, shine}}
     {}
 };
 
